@@ -175,7 +175,7 @@
         <div id="quiz-content"></div>
         <div style="display:flex; justify-content: space-between; margin-top: 30px; gap: 15px;">
             <button id="btn-prev" class="btn btn-gray">QUAY LẠI</button>
-            <button id="btn-next" class="btn btn-fire" style="flex:1">TIẾP THEO</button>
+            <button class="btn btn-fire" id="btn-next" style="flex:1">TIẾP THEO</button>
             <button id="btn-finish" class="btn" style="background:var(--success); color:white; display:none">HOÀN THÀNH 🏁</button>
         </div>
     </section>
@@ -183,7 +183,7 @@
     <section id="screen-result" class="screen">
         <div class="card" style="background: linear-gradient(135deg, #1e40af, #1e1b4b); color: white; text-align: center; padding: 40px 20px;">
             <h2 id="res-name" class="fire-text">HỌC SINH</h2>
-            <div id="res-meta">Lớp - Trường</div>
+            <div id="res-meta">Lớp</div>
             <div style="margin: 20px 0;">
                 <p style="color: #ff8d00; font-weight: bold;">CÀO ĐỂ XEM ĐIỂM SỐ & THỨ HẠNG!</p>
                 <div class="scratch-container">
@@ -362,7 +362,9 @@ const initGame = (m) => {
     document.getElementById('wish-overlay').style.display = 'flex';
     if(mode === 'test') {
         document.getElementById('wish-sub-text').style.display = 'block';
-        document.documentElement.requestFullscreen().catch(() => {});
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
     } else {
         document.getElementById('wish-sub-text').style.display = 'none';
     }
@@ -371,7 +373,7 @@ const initGame = (m) => {
         document.getElementById('wish-overlay').style.display = 'none';
         isQuizRunning = true;
         document.getElementById('main-header').style.display = 'flex';
-        document.getElementById('header-school-name').innerText = (document.getElementById('user_school').value || 'HỆ THỐNG TRỰC TUYẾN').toUpperCase();
+        document.getElementById('header-school-name').innerText = 'HỆ THỐNG TRỰC TUYẾN';
         showScreen('screen-quiz'); renderQuestion(); startTimer();
     }, 1800);
 };
@@ -449,11 +451,11 @@ async function calculateResult() {
     showScreen('screen-result');
     document.getElementById('final-score').innerText = fs.toFixed(1);
     document.getElementById('res-name').innerText = document.getElementById('username').value.toUpperCase();
-    document.getElementById('res-meta').innerText = `Lớp ${document.getElementById('user_class').value} | SBD ${document.getElementById('user_sbd').value} | THCS Thủy Phương`;
+    document.getElementById('res-meta').innerText = `Lớp ${document.getElementById('user_class').value} | SBD ${document.getElementById('user_sbd').value}`;
     if(currentUser) {
         try {
             await addDoc(collection(db, 'artifacts', appId_fixed, 'public', 'data', collectionName), {
-                name: document.getElementById('username').value, sbd: document.getElementById('user_sbd').value || '?', class: document.getElementById('user_class').value || '?', school: document.getElementById('user_school').value || '?', score: fs, duration: duration, timestamp: new Date().toISOString()
+                name: document.getElementById('username').value, sbd: document.getElementById('user_sbd').value || '?', class: document.getElementById('user_class').value || '?', score: fs, duration: duration, timestamp: new Date().toISOString()
             });
         } catch(e) { console.error(e); }
     }
@@ -502,7 +504,7 @@ async function fetchRankAndLeaderboard(myScore) {
 
 async function renderAdmin() {
     const listBody = document.getElementById('admin-list-body'); const statsBox = document.getElementById('admin-stats');
-    listBody.innerHTML = "<tr><td colspan='8'>Đang tải dữ liệu...</td></tr>";
+    listBody.innerHTML = "<tr><td colspan='7'>Đang tải dữ liệu...</td></tr>";
     try {
         const snap = await getDocs(collection(db, 'artifacts', appId_fixed, 'public', 'data', collectionName));
         let data = []; snap.forEach(d => data.push({id: d.id, ...d.data()}));
@@ -523,7 +525,7 @@ async function renderAdmin() {
         statsBox.innerHTML = `<div class="stat-box"><b>${s.xs}</b><br><small>X.Sắc</small></div><div class="stat-box"><b>${s.g}</b><br><small>Giỏi</small></div><div class="stat-box"><b>${s.k}</b><br><small>Khá</small></div><div class="stat-box"><b>${s.d}</b><br><small>Đạt</small></div><div class="stat-box" style="border-color:red"><b>${s.cd}</b><br><small>C.Đạt</small></div>`;
         listBody.innerHTML = data.map((i, idx) => `<tr><td>${idx+1}</td><td>${i.sbd}</td><td>${i.name}</td><td>${i.class}</td><td><b>${i.score.toFixed(1)}</b></td><td>${i.duration}s</td><td>${new Date(i.timestamp).toLocaleDateString()}</td><td><button style="background:red; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer" class="btn-del" data-id="${i.id}">X</button></td></tr>`).join('');
         listBody.querySelectorAll('.btn-del').forEach(b => b.onclick = () => deleteEntry(b.dataset.id));
-    } catch(e) { listBody.innerHTML = "<tr><td colspan='8'>Lỗi kết nối Firebase.</td></tr>"; }
+    } catch(e) { listBody.innerHTML = "<tr><td colspan='7'>Lỗi kết nối Firebase.</td></tr>"; }
 }
 
 async function deleteEntry(id) { if(confirm("Xóa kết quả này?")) { await deleteDoc(doc(db, 'artifacts', appId_fixed, 'public', 'data', collectionName, id)); renderAdmin(); } }
@@ -532,6 +534,7 @@ document.getElementById('btn-init-practice').onclick = () => initGame('practice'
 document.getElementById('btn-init-test').onclick = () => initGame('test');
 document.getElementById('btn-prev').onclick = () => { if(currentIdx > 0) { currentIdx--; renderQuestion(); window.scrollTo(0,0); } };
 document.getElementById('btn-next').onclick = () => { if(currentIdx < currentExam.length - 1) { currentIdx++; renderQuestion(); window.scrollTo(0,0); } };
+
 document.getElementById('btn-finish').onclick = () => document.getElementById('confirm-finish-modal').style.display = 'flex';
 document.getElementById('btn-modal-cancel').onclick = () => document.getElementById('confirm-finish-modal').style.display = 'none';
 document.getElementById('btn-modal-confirm').onclick = () => { document.getElementById('confirm-finish-modal').style.display = 'none'; calculateResult(); };
@@ -559,7 +562,7 @@ document.getElementById('btn-view-review').onclick = () => {
             q.sts.forEach((st, si) => {
                 let uV = (userAnswers[q.id]||{})[si]; let isC = (uV === st.a);
                 const uS = uV === true ? 'Đúng' : (uV === false ? 'Sai' : '?');
-                h += `<div class="tf-row"><span>${st.l} ${st.t}</span><div style="font-size:0.8rem; text-align:right;"><span style="color:${isC?'#10b981':'#ef4444'}">Bạn: <b>${uS}</b></span><br><span>Đáp án: <b>${st.a?'Đúng':'Sai'}</b> ${isC?'✓':'✗'}</span></div></div>`;
+                h += `<div class="tf-row"><span style="flex:1"><b>${st.l}</b> ${st.t}</span><div style="font-size:0.8rem; text-align:right;"><span style="color:${isC?'#10b981':'#ef4444'}">Bạn: <b>${uS}</b></span><br><span>Đáp án: <b>${st.a?'Đúng':'Sai'}</b> ${isC?'✓':'✗'}</span></div></div>`;
             });
         } else {
             const isC = norm(userAnswers[q.id]||'') === norm(q.a);
