@@ -94,7 +94,8 @@
         #scratch-canvas { position: absolute; top: 0; left: 0; z-index: 10; touch-action: none; cursor: crosshair; }
 
         .rank-badge { font-size: 1.5rem; font-weight: 900; margin-top: 15px; padding: 10px 25px; border-radius: 50px; display: inline-block; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: white; }
-        
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
         .admin-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: #f1f5f9; padding: 15px; border-radius: 15px; align-items: flex-end; }
         .admin-table-container { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #e2e8f0; }
         .admin-table { width: 100%; border-collapse: collapse; min-width: 800px; }
@@ -125,7 +126,6 @@
 
 <button id="btn-admin-open" class="btn-admin-float">QUẢN TRỊ 🔐</button>
 
-<!-- Hộp thoại xác nhận nộp bài -->
 <div id="confirm-finish-modal" class="modal-overlay">
     <div class="modal-box">
         <h2 style="color: var(--primary)">Nộp bài thi?</h2>
@@ -153,12 +153,13 @@
 
     <section id="screen-start" class="screen active">
         <div class="school-brand">
-            <h1 class="fire-text" style="font-size: 2.2rem;">LUYỆN TẬP VẬT LÝ 9</h1>
+            <h1 class="fire-text" style="font-size: 2.2rem;">ÔN TẬP VẬT LÝ 9</h1>
             <p style="color:white; opacity:0.8; margin-top:5px;">Chuyên đề: Điện trở - Định luật Ohm</p>
         </div>
 
         <div class="card" style="max-width: 550px; margin: -40px auto 30px auto; position: relative; z-index: 2; display: block;">
-            <h3 style="text-align:center; margin-bottom: 30px; color: var(--primary);">NHẬP THÔNG TIN THÍ SINH</h3>
+            <h3 style="text-align:center; margin-bottom: 20px; color: var(--primary);">NHẬP THÔNG TIN THÍ SINH</h3>
+            <p id="start-error" style="color: var(--danger); text-align: center; font-weight: bold; margin-bottom: 15px; display: none;">⚠️ Vui lòng nhập đầy đủ Họ tên, Lớp và SBD!</p>
             <div style="margin-bottom: 15px;"><label style="font-size: 0.8rem; font-weight: bold; color: #64748b;">Họ và tên:</label><input type="text" id="username" placeholder="Nhập đầy đủ họ tên"></div>
             <div style="margin-bottom: 15px;"><label style="font-size: 0.8rem; font-weight: bold; color: #64748b;">Lớp:</label><input type="text" id="user_class" placeholder="Ví dụ: 9A1"></div>
             <div style="margin-bottom: 25px;"><label style="font-size: 0.8rem; font-weight: bold; color: #64748b;">Số báo danh:</label><input type="text" id="user_sbd" placeholder="Ví dụ: 01"></div>
@@ -174,7 +175,7 @@
         <div id="quiz-content"></div>
         <div style="display:flex; justify-content: space-between; margin-top: 30px; gap: 15px;">
             <button id="btn-prev" class="btn btn-gray">QUAY LẠI</button>
-            <button class="btn btn-fire" id="btn-next" style="flex:1">TIẾP THEO</button>
+            <button id="btn-next" class="btn btn-fire" style="flex:1">TIẾP THEO</button>
             <button id="btn-finish" class="btn" style="background:var(--success); color:white; display:none">HOÀN THÀNH 🏁</button>
         </div>
     </section>
@@ -234,6 +235,7 @@
                     <option value="all">Tất cả lớp</option>
                 </select>
             </div>
+            <button id="btn-admin-refresh" class="btn" style="background:var(--secondary); color:white; font-size:0.8rem">LÀM MỚI 🔄</button>
             <button id="btn-export-excel" class="btn" style="background:var(--success); color:white; font-size:0.8rem">XUẤT EXCEL 📗</button>
         </div>
         <div class="admin-table-container"><table class="admin-table"><thead><tr><th>Hạng</th><th>SBD</th><th>Họ tên</th><th>Lớp</th><th>Điểm</th><th>TG Làm</th><th>Ngày nộp</th><th>Xoá</th></tr></thead><tbody id="admin-list-body"></tbody></table></div>
@@ -278,7 +280,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const analytics = getAnalytics(app);
 
-const appId_fixed = typeof __app_id !== 'undefined' ? __app_id : 'kham-pha-vat-ly-9';
+const appId_fixed = 'kham-pha-vat-ly-9';
 const collectionName = 'quiz_results'; 
 
 let currentUser = null, quizStartTime = 0, isQuizRunning = false, mode = '', currentIdx = 0, userAnswers = {}, timeLeft = 0, timerInt, currentExam = [];
@@ -337,10 +339,18 @@ const QUESTION_BANK = {
     ]
 };
 
-// --- GAME LOGIC ---
 const initGame = (m) => {
     const name = document.getElementById('username').value.trim();
-    if(!name) return alert("Vui lòng nhập họ tên!");
+    const cls = document.getElementById('user_class').value.trim();
+    const sbd = document.getElementById('user_sbd').value.trim();
+    
+    if(!name || !cls || !sbd) {
+        document.getElementById('start-error').style.display = 'block';
+        window.scrollTo(0,0);
+        return;
+    }
+    document.getElementById('start-error').style.display = 'none';
+
     mode = m;
     currentExam = [
         ...shuffle([...QUESTION_BANK.mcq]).slice(0, 12).map((q, i) => ({...q, id: `p1_${i}`, type: 'mcq', section: 'Phần I. Đa lựa chọn (12 câu)', displayNum: i+1})),
@@ -352,12 +362,7 @@ const initGame = (m) => {
     document.getElementById('wish-overlay').style.display = 'flex';
     if(mode === 'test') {
         document.getElementById('wish-sub-text').style.display = 'block';
-        // REQUEST FULLSCREEN ON TEST MODE
-        setTimeout(() => {
-            document.documentElement.requestFullscreen().catch((err) => {
-                console.log("Full-screen error:", err.message);
-            });
-        }, 100);
+        document.documentElement.requestFullscreen().catch(() => {});
     } else {
         document.getElementById('wish-sub-text').style.display = 'none';
     }
@@ -454,10 +459,7 @@ async function calculateResult() {
     }
     fetchRankAndLeaderboard(fs);
     initScratchCard(fs);
-    // Exit full screen if active
-    if (document.fullscreenElement) {
-        document.exitFullscreen().catch(()=>{});
-    }
+    if (document.fullscreenElement) { document.exitFullscreen().catch(()=>{}); }
 }
 
 function initScratchCard(score) {
@@ -494,7 +496,7 @@ async function fetchRankAndLeaderboard(myScore) {
         list.sort((a,b) => b.score - a.score || a.duration - b.duration);
         const myRank = list.findIndex(r => r.name === document.getElementById('username').value && r.score === myScore) + 1;
         document.getElementById('my-rank-text').innerText = `HẠNG ${myRank} / ${list.length}`;
-        document.getElementById('leaderboard-list').innerHTML = list.slice(0, 5).map((r, i) => `<div class="leader-item ${i<3?'top-rank':''}"><div style="width:30px;font-weight:900">${i+1}</div><div style="flex:1"><b>${r.name}</b><br><small>Lớp ${r.class} - ${r.duration}s</small></div><div style="font-weight:900;color:var(--accent)">${r.score.toFixed(1)}</div></div>`).join('');
+        document.getElementById('leaderboard-list').innerHTML = list.slice(0, 5).map((r, i) => `<div class="leader-item"><div style="width:30px;font-weight:900">${i+1}</div><div style="flex:1"><b>${r.name}</b><br><small>Lớp ${r.class} - ${r.duration}s</small></div><div style="font-weight:900;color:var(--accent)">${r.score.toFixed(1)}</div></div>`).join('');
     } catch (e) { console.error(e); }
 }
 
@@ -530,7 +532,6 @@ document.getElementById('btn-init-practice').onclick = () => initGame('practice'
 document.getElementById('btn-init-test').onclick = () => initGame('test');
 document.getElementById('btn-prev').onclick = () => { if(currentIdx > 0) { currentIdx--; renderQuestion(); window.scrollTo(0,0); } };
 document.getElementById('btn-next').onclick = () => { if(currentIdx < currentExam.length - 1) { currentIdx++; renderQuestion(); window.scrollTo(0,0); } };
-
 document.getElementById('btn-finish').onclick = () => document.getElementById('confirm-finish-modal').style.display = 'flex';
 document.getElementById('btn-modal-cancel').onclick = () => document.getElementById('confirm-finish-modal').style.display = 'none';
 document.getElementById('btn-modal-confirm').onclick = () => { document.getElementById('confirm-finish-modal').style.display = 'none'; calculateResult(); };
@@ -539,6 +540,7 @@ document.getElementById('btn-admin-open').onclick = () => document.getElementByI
 document.getElementById('btn-auth-cancel').onclick = () => document.getElementById('admin-auth-modal').style.display = 'none';
 document.getElementById('btn-auth-confirm').onclick = () => { if(document.getElementById('admin-pw').value === "THCSTHUYPHUONG") { document.getElementById('admin-auth-modal').style.display='none'; showScreen('screen-admin'); renderAdmin(); } else alert("Sai mật khẩu!"); };
 document.getElementById('btn-admin-close').onclick = () => showScreen('screen-start');
+document.getElementById('btn-admin-refresh').onclick = () => renderAdmin();
 document.getElementById('btn-cheat-submit').onclick = () => { document.getElementById('cheat-modal').style.display = 'none'; calculateResult(); };
 
 document.getElementById('btn-view-review').onclick = () => {
@@ -569,7 +571,7 @@ document.getElementById('btn-view-review').onclick = () => {
 };
 
 document.getElementById('btn-export-excel').onclick = async () => {
-    const snap = await getDocs(collection(db, 'artifacts', appId_path, 'public', 'data', collectionName));
+    const snap = await getDocs(collection(db, 'artifacts', appId_fixed, 'public', 'data', collectionName));
     let rows = []; snap.forEach(d => rows.push(d.data()));
     const ws = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, ws, "KetQua");
@@ -580,16 +582,13 @@ function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.cl
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60); const s = timeLeft%60; document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
 
-// ANTI-CHEAT: FULL SCREEN MONITORING
 document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement && isQuizRunning && mode === 'test') {
-        // Force submit if quiz is running and exited fullscreen in test mode
         document.getElementById('cheat-modal').style.display = 'flex';
         calculateResult();
     }
 });
 
-// ANTI-CHEAT: VISIBILITY MONITORING
 document.addEventListener('visibilitychange', () => { 
     if(document.visibilityState === 'hidden' && isQuizRunning && mode === 'test') {
         document.getElementById('cheat-modal').style.display = 'flex'; 
