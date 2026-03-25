@@ -121,11 +121,12 @@
 
 <div id="wish-overlay">
     <div class="wish-text" id="wish-main-text">CỐ LÊN CHÚC BẠN HOÀN THÀNH TỐT</div>
-    <div id="wish-sub-text" style="color: #ef4444; font-weight: 900; background: white; padding: 12px 25px; border-radius: 10px; display: none; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">HỆ THỐNG SẼ TỰ ĐỘNG NỘP BÀI NẾU THOÁT TOÀN MÀN HÌNH</div>
+    <div id="wish-sub-text" style="color: #ef4444; font-weight: 900; background: white; padding: 12px 25px; border-radius: 10px; display: none; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">HỆ THỐNG SẼ TỰ ĐỘNG NỘP BÀI NẾU THOÁT TOÀN MÀN HÌNH HOẶC CHUYỂN TAB</div>
 </div>
 
 <button id="btn-admin-open" class="btn-admin-float">QUẢN TRỊ 🔐</button>
 
+<!-- Hộp thoại xác nhận nộp bài -->
 <div id="confirm-finish-modal" class="modal-overlay">
     <div class="modal-box">
         <h2 style="color: var(--primary)">Nộp bài thi?</h2>
@@ -140,7 +141,7 @@
 <div id="cheat-modal">
     <div style="background: white; padding: 50px; border-radius: 30px; max-width: 500px; border: 10px solid var(--danger);">
         <h1 style="color:var(--danger); font-size: 3rem; margin:0">CẢNH BÁO!</h1>
-        <p style="font-size: 1.3rem; margin: 25px 0; color: #1e293b;">Bạn đã thoát chế độ Toàn màn hình hoặc rời trang. Hệ thống tự động nộp bài.</p>
+        <p style="font-size: 1.3rem; margin: 25px 0; color: #1e293b;">Bạn đã thoát chế độ Toàn màn hình, chuyển Tab hoặc mất tiêu điểm cửa sổ. Hệ thống tự động nộp bài.</p>
         <button id="btn-cheat-submit" class="btn btn-fire" style="width:100%;">XEM KẾT QUẢ</button>
     </div>
 </div>
@@ -247,7 +248,7 @@
     </footer>
 </div>
 
-<!-- Modal xác thực admin -->
+<!-- Modal Admin -->
 <div id="admin-auth-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; display:none; justify-content:center; align-items:center;">
     <div class="card" style="width:100%; max-width:400px; text-align:center;">
         <h2 style="color: var(--primary)">Xác minh Quản trị</h2>
@@ -562,7 +563,7 @@ document.getElementById('btn-view-review').onclick = () => {
             q.sts.forEach((st, si) => {
                 let uV = (userAnswers[q.id]||{})[si]; let isC = (uV === st.a);
                 const uS = uV === true ? 'Đúng' : (uV === false ? 'Sai' : '?');
-                h += `<div class="tf-row"><span style="flex:1"><b>${st.l}</b> ${st.t}</span><div style="font-size:0.8rem; text-align:right;"><span style="color:${isC?'#10b981':'#ef4444'}">Bạn: <b>${uS}</b></span><br><span>Đáp án: <b>${st.a?'Đúng':'Sai'}</b> ${isC?'✓':'✗'}</span></div></div>`;
+                h += `<div class="tf-row"><span>${st.l} ${st.t}</span><div style="font-size:0.8rem; text-align:right;"><span style="color:${isC?'#10b981':'#ef4444'}">Bạn: <b>${uS}</b></span><br><span>Đáp án: <b>${st.a?'Đúng':'Sai'}</b> ${isC?'✓':'✗'}</span></div></div>`;
             });
         } else {
             const isC = norm(userAnswers[q.id]||'') === norm(q.a);
@@ -585,6 +586,7 @@ function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.cl
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60); const s = timeLeft%60; document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
 
+// ANTI-CHEAT: FULL SCREEN & TAB MONITORING
 document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement && isQuizRunning && mode === 'test') {
         document.getElementById('cheat-modal').style.display = 'flex';
@@ -592,12 +594,16 @@ document.addEventListener('fullscreenchange', () => {
     }
 });
 
-document.addEventListener('visibilitychange', () => { 
-    if(document.visibilityState === 'hidden' && isQuizRunning && mode === 'test') {
+// ANTI-CHEAT: TAB SWITCHING (VISIBILITY) & WINDOW FOCUS (BLUR)
+const triggerCheat = () => {
+    if (isQuizRunning && mode === 'test') {
         document.getElementById('cheat-modal').style.display = 'flex'; 
         calculateResult();
     }
-});
+};
+
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') triggerCheat(); });
+window.addEventListener('blur', triggerCheat);
 
 window.onload = () => { if(localStorage.getItem('khtn9_u')) document.getElementById('username').value = localStorage.getItem('khtn9_u'); };
 document.getElementById('username').oninput = (e) => localStorage.setItem('khtn9_u', e.target.value);
