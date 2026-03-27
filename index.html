@@ -34,7 +34,19 @@
             100% { transform: skew(-0.5deg); text-shadow: 0 0 15px #ff8d00, 0 0 35px #ff4e00, 0 0 50px #ff0000; }
         }
 
-        header { background: rgba(30, 64, 175, 0.9); backdrop-filter: blur(5px); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); position: sticky; top: 0; z-index: 100; }
+        header { 
+            background: rgba(30, 64, 175, 0.95); 
+            backdrop-filter: blur(5px); 
+            color: white; 
+            padding: 15px 20px; 
+            display: none; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+        }
         .timer { background: #fee2e2; color: #dc2626; padding: 8px 20px; border-radius: 20px; font-weight: bold; border: 2px solid #ef4444; font-size: 1.1rem; }
 
         #wish-overlay {
@@ -45,12 +57,13 @@
         .wish-text {
             font-size: 3rem; font-weight: 900; color: #fff;
             text-transform: uppercase; margin-bottom: 20px;
-            animation: wishZoom 1.5s ease-out forwards;
+            animation: wishZoom 4.5s ease-out forwards;
             text-shadow: 0 0 20px #ff4e00, 0 0 40px #ff8d00;
         }
         @keyframes wishZoom {
             0% { transform: scale(0.1); opacity: 0; }
-            50% { transform: scale(1.1); opacity: 1; }
+            20% { transform: scale(1.1); opacity: 1; }
+            80% { transform: scale(1.05); opacity: 1; }
             100% { transform: scale(1); opacity: 0; }
         }
 
@@ -141,14 +154,14 @@
 <div id="cheat-modal">
     <div style="background: white; padding: 50px; border-radius: 30px; max-width: 500px; border: 10px solid var(--danger);">
         <h1 style="color:var(--danger); font-size: 3rem; margin:0">CẢNH BÁO!</h1>
-        <p style="font-size: 1.3rem; margin: 25px 0; color: #1e293b;">Bạn đã thoát chế độ Toàn màn hình, chuyển Tab hoặc mất tiêu điểm cửa sổ. Hệ thống tự động nộp bài.</p>
+        <p style="font-size: 1.3rem; margin: 25px 0; color: #1e293b;">Bạn đã rời khỏi cửa sổ làm bài. Hệ thống tự động nộp bài vì lý do gian lận.</p>
         <button id="btn-cheat-submit" class="btn btn-fire" style="width:100%;">XEM KẾT QUẢ</button>
     </div>
 </div>
 
 <div class="container">
-    <header id="main-header" style="display: none;">
-        <div id="header-school-name" style="font-weight: 900; letter-spacing: 1px; color: #facc15;">HỆ THỐNG TRỰC TUYẾN</div>
+    <header id="main-header">
+        <div style="font-weight: 900; letter-spacing: 1px; color: #facc15;">HỆ THỐNG TRỰC TUYẾN</div>
         <div class="timer" id="timer">--:--</div>
     </header>
 
@@ -197,17 +210,10 @@
             </div>
             <div id="rank-container" style="display: none;"><div id="rank-badge" class="rank-badge">XẾP LOẠI</div></div>
         </div>
-
-        <div id="leaderboard-area" class="leaderboard-card" style="display: none;">
-            <h3 style="text-align: center; color: var(--primary); font-weight: 900; margin-bottom: 20px;">🏆 BẢNG VÀNG THÀNH TÍCH 🏆</h3>
-            <div id="leaderboard-list"></div>
-        </div>
-
         <div style="display:flex; flex-direction: column; gap: 15px; margin-top: 20px;">
             <button id="btn-view-review" class="btn btn-fire" style="display:none;">GIẢI THÍCH CHI TIẾT 📖</button>
-            <button class="btn btn-gray" onclick="location.reload()">THI LẠI ĐỀ KHÁC</button>
+            <button class="btn btn-gray" onclick="location.reload()">LÀM ĐỀ KHÁC</button>
         </div>
-        
         <div id="review-area" style="display:none; margin-top: 30px;">
             <h2 style="text-align:center; color: var(--primary); margin: 30px 0;">CHI TIẾT BÀI LÀM</h2>
             <div id="review-content"></div>
@@ -344,14 +350,12 @@ const initGame = (m) => {
     const name = document.getElementById('username').value.trim();
     const cls = document.getElementById('user_class').value.trim();
     const sbd = document.getElementById('user_sbd').value.trim();
-    
     if(!name || !cls || !sbd) {
         document.getElementById('start-error').style.display = 'block';
         window.scrollTo(0,0);
         return;
     }
     document.getElementById('start-error').style.display = 'none';
-
     mode = m;
     currentExam = [
         ...shuffle([...QUESTION_BANK.mcq]).slice(0, 12).map((q, i) => ({...q, id: `p1_${i}`, type: 'mcq', section: 'Phần I. Đa lựa chọn (12 câu)', displayNum: i+1})),
@@ -363,9 +367,7 @@ const initGame = (m) => {
     document.getElementById('wish-overlay').style.display = 'flex';
     if(mode === 'test') {
         document.getElementById('wish-sub-text').style.display = 'block';
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        }
+        try { document.documentElement.requestFullscreen(); } catch(e) {}
     } else {
         document.getElementById('wish-sub-text').style.display = 'none';
     }
@@ -374,9 +376,8 @@ const initGame = (m) => {
         document.getElementById('wish-overlay').style.display = 'none';
         isQuizRunning = true;
         document.getElementById('main-header').style.display = 'flex';
-        document.getElementById('header-school-name').innerText = 'HỆ THỐNG TRỰC TUYẾN';
         showScreen('screen-quiz'); renderQuestion(); startTimer();
-    }, 1800);
+    }, 5000);
 };
 
 function renderQuestion() {
@@ -407,25 +408,18 @@ function renderQuestion() {
     container.innerHTML = html + `</div>`;
     
     if(q.type === 'mcq') {
-        container.querySelectorAll('.option').forEach(el => el.addEventListener('click', () => { 
-            userAnswers[q.id] = el.getAttribute('data-ans'); 
-            audioPing.play().catch(()=>{}); renderQuestion(); 
-        }));
+        container.querySelectorAll('.option').forEach(el => el.addEventListener('click', () => { userAnswers[q.id] = el.getAttribute('data-ans'); audioPing.play().catch(()=>{}); renderQuestion(); }));
     } else if(q.type === 'tf') {
         container.querySelectorAll('.tf-btn').forEach(el => el.addEventListener('click', () => {
-            const si = el.getAttribute('data-si'); const val = el.getAttribute('data-val') === 'true';
-            if(!userAnswers[q.id]) userAnswers[q.id] = {}; userAnswers[q.id][si] = val; 
-            audioPing.play().catch(()=>{}); renderQuestion();
+            const si = el.getAttribute('data-si'), val = el.getAttribute('data-val') === 'true';
+            if(!userAnswers[q.id]) userAnswers[q.id] = {}; userAnswers[q.id][si] = val; audioPing.play().catch(()=>{}); renderQuestion();
         }));
     } else {
         const inp = document.getElementById('short-input');
         if(inp) { inp.focus(); inp.addEventListener('input', (e) => userAnswers[q.id] = e.target.value); }
     }
-    const hbTrigger = document.getElementById('hint-trigger');
-    if(hbTrigger) hbTrigger.onclick = async () => {
-        const box = document.getElementById('hint-box'); box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
-        if(box.style.display === 'block' && window.MathJax) await MathJax.typesetPromise([box]);
-    };
+    const hb = document.getElementById('hint-trigger');
+    if(hb) hb.onclick = async () => { const b = document.getElementById('hint-box'); b.style.display = (b.style.display==='none'?'block':'none'); if(b.style.display==='block'&&window.MathJax) await MathJax.typesetPromise([b]); };
     document.getElementById('btn-prev').style.visibility = currentIdx === 0 ? 'hidden' : 'visible';
     document.getElementById('btn-next').style.display = currentIdx === currentExam.length - 1 ? 'none' : 'block';
     document.getElementById('btn-finish').style.display = currentIdx === currentExam.length - 1 ? 'block' : 'none';
@@ -435,39 +429,27 @@ function renderQuestion() {
 async function calculateResult() {
     if(!isQuizRunning) return;
     isQuizRunning = false; clearInterval(timerInt); audioFinish.play().catch(()=>{});
-    const duration = Math.floor((Date.now() - quizStartTime) / 1000);
-    let totalScore = 0;
+    const dur = Math.floor((Date.now() - quizStartTime) / 1000);
+    let score = 0;
     const tfMap = {0:0, 1:0.0625, 2:0.125, 3:0.25, 4:0.5};
     currentExam.forEach(q => {
-        const norm = (s) => s.toString().trim().replace(',','.');
-        if(q.type === 'mcq' && norm(userAnswers[q.id]||'') === norm(q.a)) totalScore += 0.25;
+        const norm = (s) => (s || "").toString().trim().replace(',','.');
+        if(q.type === 'mcq' && norm(userAnswers[q.id]||'') === norm(q.a)) score += 0.25;
         else if(q.type === 'tf') {
-            let cp = 0; let u = userAnswers[q.id] || {};
+            let cp = 0, u = userAnswers[q.id] || {};
             q.sts.forEach((st, si) => { if(u[si] === st.a) cp++; });
-            totalScore += tfMap[cp] || 0;
-        } else if(q.type === 'short' && norm(userAnswers[q.id]||'') === norm(q.a)) totalScore += 0.5;
+            score += tfMap[cp] || 0;
+        } else if(q.type === 'short' && norm(userAnswers[q.id]||'') === norm(q.a)) score += 0.5;
     });
-
-    const fs = parseFloat(Math.min(7, totalScore).toFixed(1));
-    showScreen('screen-result');
+    const fs = parseFloat(Math.min(7, score).toFixed(1));
+    showScreen('screen-result'); document.getElementById('main-header').style.display = 'none';
     document.getElementById('final-score').innerText = fs.toFixed(1);
     document.getElementById('res-name').innerText = document.getElementById('username').value.toUpperCase();
     document.getElementById('res-meta').innerText = `Lớp ${document.getElementById('user_class').value} | SBD ${document.getElementById('user_sbd').value}`;
-    
     if(currentUser) {
-        try {
-            await addDoc(collection(db, 'artifacts', appId_fixed, 'public', 'data', collectionName), {
-                name: document.getElementById('username').value, 
-                sbd: document.getElementById('user_sbd').value || '?', 
-                class: document.getElementById('user_class').value || '?', 
-                score: fs, 
-                duration: duration, 
-                timestamp: new Date().toISOString()
-            });
-        } catch(e) { console.error("Firebase Error:", e); }
+        try { await addDoc(collection(db, 'artifacts', 'kham-pha-vat-ly-9', 'public', 'data', collectionName), { name: document.getElementById('username').value, sbd: document.getElementById('user_sbd').value || '?', class: document.getElementById('user_class').value || '?', score: fs, duration: dur, timestamp: new Date().toISOString() }); } catch(e) {}
     }
-    fetchRankAndLeaderboard(fs);
-    initScratchCard(fs);
+    fetchRankAndLeaderboard(fs); initScratchCard(fs);
     if (document.fullscreenElement) { document.exitFullscreen().catch(()=>{}); }
 }
 
@@ -475,17 +457,16 @@ function initScratchCard(score) {
     const canvas = document.getElementById('scratch-canvas'); const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#b59410'; ctx.fillRect(0, 0, 300, 150);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center'; ctx.fillText('CÀO ĐỂ XEM ĐIỂM & HẠNG', 150, 80);
-    let isDrawing = false;
-    const scratch = (e) => {
-        if(!isDrawing) return;
-        const r = canvas.getBoundingClientRect(); const cx = (e.clientX || (e.touches ? e.touches[0].clientX : 0)) - r.left; const cy = (e.clientY || (e.touches ? e.touches[0].clientY : 0)) - r.top;
+    let isD = false;
+    const sc = (e) => {
+        if(!isD) return;
+        const r = canvas.getBoundingClientRect(), cx = (e.clientX || (e.touches ? e.touches[0].clientX : 0)) - r.left, cy = (e.clientY || (e.touches ? e.touches[0].clientY : 0)) - r.top;
         ctx.globalCompositeOperation = 'destination-out'; ctx.beginPath(); ctx.arc(cx, cy, 25, 0, Math.PI * 2); ctx.fill();
         let d = ctx.getImageData(0,0,300,150).data, c = 0; for(let i=3; i<d.length; i+=4) if(d[i]===0) c++;
         if(c > 300*150*0.45) {
             canvas.style.transition = '0.6s'; canvas.style.opacity = '0';
             setTimeout(() => { 
                 canvas.style.display = 'none'; document.getElementById('my-rank-text').style.display = 'block';
-                document.getElementById('leaderboard-area').style.display = 'block';
                 document.getElementById('btn-view-review').style.display = 'block'; 
                 document.getElementById('rank-container').style.display = 'block'; 
                 if(score >= 5) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
@@ -495,31 +476,30 @@ function initScratchCard(score) {
             }, 600);
         }
     };
-    canvas.onmousedown = canvas.ontouchstart = () => isDrawing = true; window.onmouseup = window.ontouchend = () => isDrawing = false; canvas.onmousemove = canvas.ontouchmove = scratch;
+    canvas.onmousedown = canvas.ontouchstart = () => isD = true; window.onmouseup = window.ontouchend = () => isD = false; canvas.onmousemove = canvas.ontouchmove = sc;
 }
 
 async function fetchRankAndLeaderboard(myScore) {
     try {
-        const snap = await getDocs(collection(db, 'artifacts', appId_fixed, 'public', 'data', collectionName));
+        const snap = await getDocs(collection(db, 'artifacts', 'kham-pha-vat-ly-9', 'public', 'data', collectionName));
         let list = []; snap.forEach(d => list.push(d.data()));
         list.sort((a,b) => b.score - a.score || a.duration - b.duration);
         const myRank = list.findIndex(r => r.name === document.getElementById('username').value && r.score === myScore) + 1;
         document.getElementById('my-rank-text').innerText = `HẠNG ${myRank} / ${list.length}`;
-        document.getElementById('leaderboard-list').innerHTML = list.slice(0, 5).map((r, i) => `<div class="leader-item"><div style="width:30px;font-weight:900">${i+1}</div><div style="flex:1"><b>${r.name}</b><br><small>Lớp ${r.class} - ${r.duration}s</small></div><div style="font-weight:900;color:var(--accent)">${r.score.toFixed(1)}</div></div>`).join('');
-    } catch (e) { console.error(e); }
+    } catch (e) {}
 }
 
 async function renderAdmin() {
-    const listBody = document.getElementById('admin-list-body'); const statsBox = document.getElementById('admin-stats');
-    listBody.innerHTML = "<tr><td colspan='7'>Đang tải dữ liệu...</td></tr>";
+    const listBody = document.getElementById('admin-list-body'), statsBox = document.getElementById('admin-stats');
+    listBody.innerHTML = "<tr><td colspan='8'>Đang tải...</td></tr>";
     try {
-        const snap = await getDocs(collection(db, 'artifacts', appId_fixed, 'public', 'data', collectionName));
+        const snap = await getDocs(collection(db, 'artifacts', 'kham-pha-vat-ly-9', 'public', 'data', collectionName));
         let data = []; snap.forEach(d => data.push({id: d.id, ...d.data()}));
         const classes = [...new Set(data.map(i => i.class))].sort();
         const fSelect = document.getElementById('admin-filter-class');
         const oldVal = fSelect.value;
         fSelect.innerHTML = '<option value="all">Tất cả lớp</option>' + classes.map(c => `<option value="${c}" ${c===oldVal?'selected':''}>Lớp ${c}</option>`).join('');
-        const cFilter = fSelect.value; if(cFilter !== 'all') data = data.filter(i => i.class === cFilter);
+        if(fSelect.value !== 'all') data = data.filter(i => i.class === fSelect.value);
         const sVal = document.getElementById('admin-sort').value;
         data.sort((a,b) => {
             if(sVal === 'score_desc') return b.score - a.score || a.duration - b.duration;
@@ -530,47 +510,43 @@ async function renderAdmin() {
         let s = { xs: 0, g: 0, k: 0, d: 0, cd: 0 };
         data.forEach(i => { if(i.score >= 6) s.xs++; else if(i.score >= 5) s.g++; else if(i.score >= 4) s.k++; else if(i.score >= 3) s.d++; else s.cd++; });
         statsBox.innerHTML = `<div class="stat-box"><b>${s.xs}</b><br><small>X.Sắc</small></div><div class="stat-box"><b>${s.g}</b><br><small>Giỏi</small></div><div class="stat-box"><b>${s.k}</b><br><small>Khá</small></div><div class="stat-box"><b>${s.d}</b><br><small>Đạt</small></div><div class="stat-box" style="border-color:red"><b>${s.cd}</b><br><small>C.Đạt</small></div>`;
-        listBody.innerHTML = data.map((i, idx) => `<tr><td>${idx+1}</td><td>${i.sbd}</td><td>${i.name}</td><td>${i.class}</td><td><b>${i.score.toFixed(1)}</b></td><td>${i.duration}s</td><td>${new Date(i.timestamp).toLocaleDateString()}</td><td><button style="background:red; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer" class="btn-del" data-id="${i.id}">X</button></td></tr>`).join('');
+        listBody.innerHTML = data.map((i, idx) => `<tr><td>${idx+1}</td><td>${i.sbd}</td><td>${i.name}</td><td>${i.class}</td><td><b>${(i.score||0).toFixed(1)}</b></td><td>${i.duration}s</td><td>${new Date(i.timestamp).toLocaleDateString()}</td><td><button style="background:red; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer" class="btn-del" data-id="${i.id}">X</button></td></tr>`).join('');
         listBody.querySelectorAll('.btn-del').forEach(b => b.onclick = () => deleteEntry(b.dataset.id));
-    } catch(e) { listBody.innerHTML = "<tr><td colspan='7'>Lỗi kết nối Firebase.</td></tr>"; }
+    } catch(e) { listBody.innerHTML = "<tr><td colspan='8'>Lỗi kết nối Firebase.</td></tr>"; }
 }
 
-async function deleteEntry(id) { if(confirm("Xóa kết quả này?")) { await deleteDoc(doc(db, 'artifacts', appId_fixed, 'public', 'data', collectionName, id)); renderAdmin(); } }
+async function deleteEntry(id) { if(confirm("Xóa kết quả này?")) { await deleteDoc(doc(db, 'artifacts', 'kham-pha-vat-ly-9', 'public', 'data', collectionName, id)); renderAdmin(); } }
 
 document.getElementById('btn-init-practice').onclick = () => initGame('practice');
 document.getElementById('btn-init-test').onclick = () => initGame('test');
 document.getElementById('btn-prev').onclick = () => { if(currentIdx > 0) { currentIdx--; renderQuestion(); window.scrollTo(0,0); } };
 document.getElementById('btn-next').onclick = () => { if(currentIdx < currentExam.length - 1) { currentIdx++; renderQuestion(); window.scrollTo(0,0); } };
-
 document.getElementById('btn-finish').onclick = () => document.getElementById('confirm-finish-modal').style.display = 'flex';
 document.getElementById('btn-modal-cancel').onclick = () => document.getElementById('confirm-finish-modal').style.display = 'none';
 document.getElementById('btn-modal-confirm').onclick = () => { document.getElementById('confirm-finish-modal').style.display = 'none'; calculateResult(); };
-
 document.getElementById('btn-admin-open').onclick = () => document.getElementById('admin-auth-modal').style.display = 'flex';
 document.getElementById('btn-auth-cancel').onclick = () => document.getElementById('admin-auth-modal').style.display = 'none';
 document.getElementById('btn-auth-confirm').onclick = () => { if(document.getElementById('admin-pw').value === "THCSTHUYPHUONG") { document.getElementById('admin-auth-modal').style.display='none'; showScreen('screen-admin'); renderAdmin(); } else alert("Sai mật khẩu!"); };
-document.getElementById('btn-admin-close').onclick = () => showScreen('screen-start');
+document.getElementById('btn-admin-close').onclick = () => { document.getElementById('main-header').style.display = 'none'; showScreen('screen-start'); };
 document.getElementById('btn-admin-refresh').onclick = () => renderAdmin();
 document.getElementById('btn-cheat-submit').onclick = () => { document.getElementById('cheat-modal').style.display = 'none'; calculateResult(); };
 
 document.getElementById('btn-view-review').onclick = () => {
-    const area = document.getElementById('review-area'); const content = document.getElementById('review-content');
-    const labels = ['A', 'B', 'C', 'D']; area.style.display = 'block'; let h = '';
+    const area = document.getElementById('review-area'), content = document.getElementById('review-content'), labels = ['A', 'B', 'C', 'D'];
+    area.style.display = 'block'; let h = '';
     currentExam.forEach(q => {
         const norm = (s) => (s || "").toString().trim().replace(',','.');
         h += `<div class="card" style="border-left: 8px solid var(--primary)"><h3>Câu ${q.displayNum}. ${q.q}</h3>`;
         if(q.type === 'mcq') {
-            const opts = q.shuffledOptions || q.o;
-            opts.forEach((o, idx) => {
-                const isCorrect = norm(o) === norm(q.a); const isUser = userAnswers[q.id] === o;
-                h += `<div class="option ${isCorrect?'correct':(isUser?'wrong':'')}"><b>${labels[idx]}.</b> ${o} ${isCorrect?'✓':(isUser?'✗':'')}</div>`;
+            (q.shuffledOptions || q.o).forEach((o, idx) => {
+                const isC = norm(o) === norm(q.a), isU = userAnswers[q.id] === o;
+                h += `<div class="option ${isC?'correct':(isU?'wrong':'')}"><b>${labels[idx]}.</b> ${o} ${isC?'✓':(isU?'✗':'')}</div>`;
             });
             if(norm(userAnswers[q.id]||'') !== norm(q.a)) h += `<div class="review-choice-box review-wrong">Bạn chọn: <b>${userAnswers[q.id]||'Chưa chọn'}</b>. Đáp án: <b style="color:#10b981">${q.a}</b></div>`;
         } else if(q.type === 'tf') {
             q.sts.forEach((st, si) => {
-                let uV = (userAnswers[q.id]||{})[si]; let isC = (uV === st.a);
-                const uS = uV === true ? 'Đúng' : (uV === false ? 'Sai' : '?');
-                h += `<div class="tf-row"><span>${st.l} ${st.t}</span><div style="font-size:0.8rem; text-align:right;"><span style="color:${isC?'#10b981':'#ef4444'}">Bạn: <b>${uS}</b></span><br><span>Đáp án: <b>${st.a?'Đúng':'Sai'}</b> ${isC?'✓':'✗'}</span></div></div>`;
+                let uV = (userAnswers[q.id]||{})[si], isC = (uV === st.a);
+                h += `<div class="tf-row"><span>${st.l} ${st.t}</span><div style="font-size:0.8rem; text-align:right;"><span style="color:${isC?'#10b981':'#ef4444'}">Bạn: <b>${uV===true?'Đúng':(uV===false?'Sai':'?')}</b></span><br><span>Đáp án: <b>${st.a?'Đúng':'Sai'}</b> ${isC?'✓':'✗'}</span></div></div>`;
             });
         } else {
             const isC = norm(userAnswers[q.id]||'') === norm(q.a);
@@ -578,39 +554,35 @@ document.getElementById('btn-view-review').onclick = () => {
         }
         h += `<div class="explanation"><b>Giải thích:</b> ${q.e}</div></div>`;
     });
-    content.innerHTML = h; area.scrollIntoView({behavior:'smooth'}); if(window.MathJax) MathJax.typesetPromise([content]);
+    content.innerHTML = h; 
+    area.scrollIntoView({behavior:'smooth'});
+    // Sửa lỗi hiển thị trên Mobile bằng cách thêm delay nhỏ trước khi cuộn
+    setTimeout(() => {
+        area.scrollIntoView({behavior:'smooth'});
+        if(window.MathJax) MathJax.typesetPromise([content]);
+    }, 100);
 };
 
 document.getElementById('btn-export-excel').onclick = async () => {
-    const snap = await getDocs(collection(db, 'artifacts', appId_fixed, 'public', 'data', collectionName));
+    const snap = await getDocs(collection(db, 'artifacts', 'kham-pha-vat-ly-9', 'public', 'data', collectionName));
     let rows = []; snap.forEach(d => rows.push(d.data()));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, ws, "KetQua");
-    XLSX.writeFile(workbook, `KetQua_Vly9_DienTro_${new Date().toLocaleDateString()}.xlsx`);
+    const ws = XLSX.utils.json_to_sheet(rows), wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "KetQua");
+    XLSX.writeFile(wb, `KetQua_Vly9_DienTro_${new Date().toLocaleDateString()}.xlsx`);
 };
 
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60); const s = timeLeft%60; document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
+function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60), s = timeLeft%60, el = document.getElementById('timer'); if(el) el.innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
 
-document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && isQuizRunning && mode === 'test') {
-        document.getElementById('cheat-modal').style.display = 'flex';
-        calculateResult();
-    }
-});
-
-const triggerCheat = () => {
-    if (isQuizRunning && mode === 'test') {
-        document.getElementById('cheat-modal').style.display = 'flex'; 
-        calculateResult();
-    }
-};
-
+const triggerCheat = () => { if (isQuizRunning && mode === 'test') { document.getElementById('cheat-modal').style.display = 'flex'; calculateResult(); } };
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && isQuizRunning && mode === 'test') triggerCheat(); });
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') triggerCheat(); });
 window.addEventListener('blur', triggerCheat);
 
-window.onload = () => { if(localStorage.getItem('khtn9_u')) document.getElementById('username').value = localStorage.getItem('khtn9_u'); };
+window.onload = () => { 
+    document.getElementById('main-header').style.display = 'none'; 
+    if(localStorage.getItem('khtn9_u')) document.getElementById('username').value = localStorage.getItem('khtn9_u'); 
+};
 document.getElementById('username').oninput = (e) => localStorage.setItem('khtn9_u', e.target.value);
 </script>
 </body>
