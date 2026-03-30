@@ -202,7 +202,7 @@
     </style>
 </head>
 
-<body oncontextmenu="return false" oncopy="return false" oncut="return false" onpaste="return false" onselectstart="return false">
+<body oncontextmenu="return false" oncopy="return false" oncut="return false" onpaste="return false">
 
 <div id="wish-overlay">
     <canvas id="fire-canvas"></canvas>
@@ -291,7 +291,6 @@
         </div>
     </section>
 
-    <!-- Màn hình Admin -->
     <section id="screen-admin" class="screen">
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 class="fire-text" style="margin:0; font-size: 1.5rem;">📊 QUẢN LÝ KẾT QUẢ</h2>
@@ -378,7 +377,7 @@ let currentUser = null, quizStartTime = 0, isQuizRunning = false, mode = '', cur
 const audioPing = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
 const audioFinish = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
 
-// KHÓA LỆNH COPY TOÀN CỤC (Giữ lại để bảo mật nội dung đề bài)
+// KHÓA LỆNH COPY TOÀN CỤC
 document.addEventListener('copy', (e) => { e.preventDefault(); return false; });
 
 // KHÓA PHÍM TẮT HỆ THỐNG - ĐÃ MỞ CHẶN F12 VÀ CTRL+SHIFT+I ĐỂ GIẢ LẬP MOBILE
@@ -711,7 +710,7 @@ document.getElementById('btn-export-excel').onclick = async () => {
 };
 
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], i]]; } return a; }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60), s = timeLeft%60, el = document.getElementById('timer'); if(el) el.innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
 
 const triggerCheat = () => { if (isQuizRunning && mode === 'test') { calculateResult(); document.getElementById('cheat-modal').style.display = 'flex'; } };
