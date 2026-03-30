@@ -77,6 +77,7 @@
         }
         .timer { background: #fee2e2; color: #dc2626; padding: 8px 20px; border-radius: 20px; font-weight: bold; border: 2px solid #ef4444; font-size: 1.1rem; }
 
+        /* OVERLAY LỬA RỰC CHÁY (5 GIÂY) */
         #wish-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 10000;
@@ -180,6 +181,24 @@
         .badge-mode { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; color: white; text-transform: uppercase; }
         .badge-test { background: var(--danger); }
         .badge-practice { background: var(--secondary); }
+
+        /* RESPONSIVE DESIGN - TỐI ƯU CHO ĐIỆN THOẠI */
+        @media (max-width: 640px) {
+            .wish-title { font-size: 3rem; }
+            .wish-sub { font-size: 1.3rem; }
+            .cheat-warning-box { font-size: 1rem; padding: 12px 20px; }
+            .card { padding: 20px 15px; }
+            .school-brand { padding: 40px 15px; }
+            .school-brand h1 { font-size: 1.8rem; }
+            #final-score { font-size: 4rem; }
+            #my-rank-text { font-size: 1.3rem; }
+            .option { padding: 12px 15px; font-size: 0.95rem; }
+            .section-title { font-size: 0.9rem; padding: 10px; }
+            .timer { font-size: 0.9rem; padding: 6px 15px; }
+            .btn { padding: 10px 18px; font-size: 0.9rem; }
+            .tf-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .tf-btn { width: 100%; }
+        }
     </style>
 </head>
 
@@ -191,7 +210,7 @@
         <h1 class="wish-title">🔥 CỐ LÊN! 🔥</h1>
         <p class="wish-sub">Chúc bạn hoàn thành tốt bài làm!</p>
         <div id="wish-cheat-info" class="cheat-warning-box">
-            HỆ THỐNG SẼ TỰ ĐỘNG NỘP BÀI<br>NẾU THOÁT TOÀN MÀN HÌHOẶC CHUYỂN TAB
+            HỆ THỐNG SẼ TỰ ĐỘNG NỘP BÀI<br>NẾU THOÁT TOÀN MÀN HÌNH HOẶC CHUYỂN TAB
         </div>
     </div>
 </div>
@@ -323,7 +342,6 @@
     </footer>
 </div>
 
-<!-- Modal Admin -->
 <div id="admin-auth-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; display:none; justify-content:center; align-items:center;">
     <div class="card" style="width:100%; max-width:400px; text-align:center;">
         <h2 style="color: var(--primary)">Xác minh Quản trị</h2>
@@ -360,12 +378,12 @@ let currentUser = null, quizStartTime = 0, isQuizRunning = false, mode = '', cur
 const audioPing = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
 const audioFinish = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
 
-// KHÓA LỆNH COPY TOÀN CỤC
+// KHÓA LỆNH COPY TOÀN CỤC (Giữ lại để bảo mật nội dung đề bài)
 document.addEventListener('copy', (e) => { e.preventDefault(); return false; });
 
-// KHÓA PHÍM TẮT HỆ THỐNG
+// KHÓA PHÍM TẮT HỆ THỐNG - ĐÃ MỞ CHẶN F12 VÀ CTRL+SHIFT+I ĐỂ GIẢ LẬP MOBILE
 document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'u' || e.key === 's')) || (e.ctrlKey && e.shiftKey && e.key === 'i') || e.key === 'F12') {
+    if ((e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'u' || e.key === 's'))) {
         e.preventDefault(); return false;
     }
 }, true);
@@ -373,7 +391,6 @@ document.addEventListener('keydown', (e) => {
 signInAnonymously(auth).catch(e => console.error(e));
 onAuthStateChanged(auth, user => currentUser = user);
 
-// NGÂN HÀNG CÂU HỎI ĐẦY ĐỦ 12 - 4 - 4
 const QUESTION_BANK = {
     mcq: [
         { q: "Đại lượng đặc trưng cho mức độ cản trở dòng điện của vật dẫn được gọi là", a: "Điện trở.", o: ["Cường độ dòng điện.", "Hiệu điện thế.", "Điện trở.", "Công suất điện."], e: "Điện trở biểu thị tính chất cản trở dòng điện của dây dẫn." },
@@ -545,7 +562,6 @@ async function calculateResult() {
     cancelAnimationFrame(fireRequest);
     const dur = Math.floor((Date.now() - quizStartTime) / 1000);
     let score = 0;
-    // TỔNG ĐIỂM 7.0
     const tfMap = {0:0, 1:0.125, 2:0.25, 3:0.375, 4:0.5};
     currentExam.forEach(q => {
         const norm = (s) => (s || "").toString().trim().replace(',','.');
@@ -561,7 +577,6 @@ async function calculateResult() {
     document.getElementById('res-name').innerText = document.getElementById('username').value.toUpperCase();
     document.getElementById('res-meta').innerText = `Lớp ${document.getElementById('user_class').value} | SBD ${document.getElementById('user_sbd').value}`;
     
-    // Xếp loại dựa trên thang điểm 7
     let rb = document.getElementById('rank-badge'), txt = 'CHƯA ĐẠT', col = '#64748b';
     if(fs >= 6.3) { txt='XUẤT SẮC'; col='#f59e0b'; }
     else if(fs >= 5.6) { txt='GIỎI'; col='#10b981'; }
@@ -650,7 +665,6 @@ document.getElementById('admin-filter-mode').onchange = () => renderAdmin();
 document.getElementById('admin-filter-class').onchange = () => renderAdmin();
 document.getElementById('btn-cheat-submit').onclick = () => { document.getElementById('cheat-modal').style.display = 'none'; calculateResult(); };
 
-// NÚT GIẢI THÍCH CHI TIẾT - ĐÃ SỬA LỖI HIỂN THỊ CÔNG THỨC
 document.getElementById('btn-view-review').onclick = () => {
     const area = document.getElementById('review-area'), content = document.getElementById('review-content'), labels = ['A', 'B', 'C', 'D'];
     area.style.display = 'block'; let h = '';
@@ -679,13 +693,11 @@ document.getElementById('btn-view-review').onclick = () => {
     });
     content.innerHTML = h; 
     
-    // FIXED: getgetElementById -> getElementById
     const target = document.getElementById('review-heading');
     if (target) { 
         setTimeout(async () => { 
             const y = target.getBoundingClientRect().top + window.pageYOffset - 20; 
             window.scrollTo({ top: y, behavior: 'smooth' }); 
-            // Cưỡng bức MathJax quét và vẽ lại công thức trong vùng giải thích
             if(window.MathJax) await MathJax.typesetPromise([content]); 
         }, 150); 
     }
@@ -699,7 +711,7 @@ document.getElementById('btn-export-excel').onclick = async () => {
 };
 
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], i]]; } return a; }
 function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60), s = timeLeft%60, el = document.getElementById('timer'); if(el) el.innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
 
 const triggerCheat = () => { if (isQuizRunning && mode === 'test') { calculateResult(); document.getElementById('cheat-modal').style.display = 'flex'; } };
