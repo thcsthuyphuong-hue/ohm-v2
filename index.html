@@ -197,6 +197,11 @@
         .char-slot { width: 50px; height: 60px; border: 3px solid #cbd5e0; border-radius: 10px; text-align: center; font-size: 1.8rem; font-weight: 900; color: var(--primary); outline: none; }
         .char-slot:focus { border-color: var(--accent); background: #fff7ed; }
 
+        .explanation { margin-top: 15px; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.9rem; color: #475569; line-height: 1.5; }
+        .score-badge { float: right; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; }
+        .score-plus { background: #dcfce7; color: #166534; }
+        .score-zero { background: #fee2e2; color: #991b1b; }
+
         @media (max-width: 640px) {
             .wish-title { font-size: 3rem; }
             .wish-sub { font-size: 1.3rem; }
@@ -268,7 +273,7 @@
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <button id="btn-init-practice" class="btn btn-gray">LUYỆN TẬP</button>
+                <button id="btn-init-practice" class="btn btn-gray">LUYỆT TẬP</button>
                 <button id="btn-init-test" class="btn btn-fire">KIỂM TRA</button>
             </div>
         </div>
@@ -418,6 +423,11 @@ const audioFinish = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing
 let practiceTimeLimit = 2700;
 let testTimeLimit = 2700;
 
+// CỜ CHỐNG GIAN LẬN - SỬA LỖI
+let canCheckCheat = false; 
+let isProcessingCheat = false;
+let wishTimeoutId = null; // Quản lý timer của màn hình "CỐ LÊN"
+
 document.addEventListener('copy', (e) => { e.preventDefault(); return false; });
 document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'u' || e.key === 's'))) {
@@ -437,32 +447,32 @@ const QUESTION_BANK = {
         { q: "Trong hệ SI, đơn vị của điện trở là gì?", a: "Ohm ($\\Omega$)", o: ["Ampere (A)", "Volt (V)", "Ohm ($\\Omega$)", "Watt (W)"], e: "Ohm ($\\Omega$) là đơn vị chuẩn đo điện trở." },
         { q: "Nội dung định luật Ohm cho biết cường độ dòng điện chạy qua một dây dẫn", a: "tỉ lệ thuận với hiệu điện thế giữa hai đầu dây.", o: ["tỉ lệ thuận with điện trở.", "tỉ lệ nghịch với hiệu điện thế.", "tỉ lệ thuận với hiệu điện thế giữa hai đầu dây.", "không phụ thuộc vật liệu."], e: "Hệ thức $I = U/R$ cho thấy $I$ và $U$ tỉ lệ thuận." },
         { q: "Nếu hiệu điện thế $U$ giữa hai đầu điện trở tăng 3 lần thì cường độ dòng điện $I$ qua điện trở đó sẽ", a: "tăng lên 3 lần.", o: ["giảm 3 lần.", "tăng lên 3 lần.", "không đổi.", "tăng 9 lần."], e: "$I$ tỉ lệ thuận with $U$ theo định luật Ohm." },
-        { q: "Đồ thị biểu diễn mối quan hệ giữa cường độ dòng điện $I$ và hiệu điện thế $U$ của một điện trở là", a: "một đường thẳng đi qua gốc tọa độ.", o: ["đường cong parabol.", "một đường thẳng đi qua gốc tọa độ.", "đường thẳng song song trục hoành.", "đường tròn."], e: "$I = (1/R) \\cdot U$ là phương trình đường thẳng qua gốc O.", img: "https://vungoi.vn/lop-9/bai-tap-trac-nghiem-vat-li-9-bai-1-su-phu-thuoc-cua-cuong-do-dong-dien-vao-hieu-dien-the-giua-hai-dau-day-dan-v2-id5a74070a26735e00192e4726.html?action=get_image&path=https://images.vungoi.vn/images/2021/01/5e7300f89ed20a273b063162-1611738221.png" },
-        { q: "Công thức xác định điện trở của một dây dẫn hình trụ, đồng chất có chiều dài $l$, tiết diện $S$ và điện trở suất $\\rho$ là", a: "$R = \\rho\\frac{l}{S}$", o: ["$R = \\rho\\frac{S}{l}$", "$R = \\rho\\frac{l}{S}$", "$R = \\frac{S}{\\rho l}$", "$R = \\frac{l}{\\rho S}$"], e: "Điện trở $R$ tỉ lệ thuận với chiều dài $l$ và tỉ lệ nghịch với tiết diện $S$." },
+        { q: "Đồ thị biểu diễn mối quan hệ giữa cường độ dòng điện $I$ and hiệu điện thế $U$ của một điện trở là", a: "một đường thẳng đi qua gốc tọa độ.", o: ["đường cong parabol.", "một đường thẳng đi qua gốc tọa độ.", "đường thẳng song song trục hoành.", "đường tròn."], e: "$I = (1/R) \\cdot U$ là phương trình đường thẳng qua gốc O.", img: "https://images.vungoi.vn/images/2021/01/5e7300f89ed20a273b063162-1611738221.png" },
+        { q: "Công thức xác định điện trở của một dây dẫn hình trụ, đồng chất có chiều dài $l$, tiết diện $S$ và điện trở suất $\\rho$ là", a: "$R = \\rho\\frac{l}{S}$", o: ["$R = \\rho\\frac{S}{l}$", "$R = \\rho\\frac{l}{S}$", "$R = \\frac{S}{\\rho l}$", "$R = \\frac{l}{\\rho S}$"], e: "Điện trở $R$ tỉ lệ thuận with chiều dài $l$ và tỉ lệ nghịch with tiết diện $S$." },
         { q: "Khi dịch chuyển con chạy của biến trở sang phải (như hình), điện trở của biến trở tham gia vào mạch sẽ thay đổi thế nào?", a: "Tăng lên.", o: ["Tăng lên.", "Giảm đi.", "Không đổi.", "Lúc tăng lúc giảm."], e: "Dịch chuyển sang phải làm tăng chiều dài phần dây dẫn của biến trở tham gia vào mạch, do đó điện trở tăng.", img: "https://hoctot.nam.name.vn/Images/BaiHoc/vat-li-9/bai-10-bien-tro-dien-tro-dung-trong-ki-thuat/bai-10-hinh-102.png" },
         { q: "Hai điện trở $R_1$ và $R_2$ mắc nối tiếp. Biết $R_1 = 3 R_2$, cường độ dòng điện qua các điện trở quan hệ như thế nào?", a: "$I_1 = I_2$", o: ["$I_1 = 3 I_2$", "$I_2 = 3 I_1$", "$I_1 = I_2$", "$I_1 = 9 I_2$"], e: "Trong mạch nối tiếp, cường độ dòng điện tại mọi điểm là như nhau." },
-        { q: "Đối với đoạn mạch gồm hai điện trở $R_1$ và $R_2$ mắc song song, hệ thức nào sau đây là đúng?", a: "$U_1 = U_2$", o: ["$U_1 = 3 U_2$", "$U_1 = U_2$", "$U_{tđ} = U_1 + U_2$", "$I_1 = I_2$"], e: "Trong mạch song song, hiệu điện thế giữa hai đầu mỗi nhánh là bằng nhau." },
+        { q: "Đối với đoạn mạch gồm hai điện trở $R_1$ and $R_2$ mắc song song, hệ thức nào sau đây là đúng?", a: "$U_1 = U_2$", o: ["$U_1 = 3 U_2$", "$U_1 = U_2$", "$U_{tđ} = U_1 + U_2$", "$I_1 = I_2$"], e: "Trong mạch song song, hiệu điện thế giữa hai đầu mỗi nhánh là bằng nhau." },
         { q: "Đặt hiệu điện thế $U = 12V$ vào hai đầu một điện trở $R = 24\\Omega$. Cường độ dòng điện qua điện trở là", a: "0,5 A", o: ["0,5 A", "2,0 A", "12 A", "288 A"], e: "$I = U/R = 12/24 = 0,5$ A." },
         { q: "Đơn vị của điện trở suất $\\rho$ trong hệ SI là", a: "Ohm.mét ($\\Omega \\cdot m$)", o: ["Ohm ($\\Omega$)", "Ohm/mét ($\\Omega/m$)", "Ohm.mét ($\\Omega \\cdot m$)", "Ohm.mét vuông ($\\Omega \\cdot m^2$)"], e: "Điện trở suất có đơn vị chuẩn là Ohm.mét." },
-        { q: "Hai dây dẫn bằng đồng có cùng chiều dài, dây thứ nhất có tiết diện gấp đôi dây thứ hai. So sánh điện trở của chúng?", a: "$R_2 = 2 R_1$", o: ["$R_1 = 2 R_2$", "$R_2 = 2 R_1$", "$R_1 = R_2$", "$R_1 = 4 R_2$"], e: "Điện trở tỉ lệ nghịch với tiết diện. Tiết diện lớn gấp đôi thì điện trở nhỏ đi một nửa." }
+        { q: "Hai dây dẫn bằng đồng có cùng chiều dài, dây thứ nhất có tiết diện gấp đôi dây thứ hai. So sánh điện trở của chúng?", a: "$R_2 = 2 R_1$", o: ["$R_1 = 2 R_2$", "$R_2 = 2 R_1$", "$R_1 = R_2$", "$R_1 = 4 R_2$"], e: "Điện trở tỉ lệ nghịch with tiết diện. Tiết diện lớn gấp đôi thì điện trở nhỏ đi một nửa." }
     ],
     tf: [
         { ctx: "Cho một dây dẫn có điện trở $R$. Đặt vào hai đầu dây dẫn một hiệu điện thế $U$ thì dòng điện qua nó là $I$.", sts: [ 
-            { l: "a)", t: "Cường độ dòng điện I tỉ lệ thuận với hiệu điện thế U.", a: true }, 
+            { l: "a)", t: "Cường độ dòng điện I tỉ lệ thuận with hiệu điện thế U.", a: true }, 
             { l: "b)", t: "Khi điện trở R tăng lên 2 lần và U giữ nguyên thì I cũng tăng 2 lần.", a: false }, 
             { l: "c)", t: "Đồ thị biểu diễn sự phụ thuộc của I vào U là một đường thẳng đi qua gốc tọa độ.", a: true }, 
             { l: "d)", t: "Thương số $U/I$ đối với mỗi dây dẫn là một giá trị không đổi, gọi là điện trở R.", a: true } 
-        ], e: "Theo định luật Ohm, I tỉ lệ nghịch với R nên R tăng thì I phải giảm." },
-        { ctx: "Xét hai điện trở $R_1 = 10\\Omega$ và $R_2 = 20\\Omega$ mắc vào nguồn điện có hiệu điện thế không đổi.", sts: [ 
+        ], e: "Theo định luật Ohm, I tỉ lệ nghịch with R nên R tăng thì I phải giảm." },
+        { ctx: "Xét hai điện trở $R_1 = 10\\Omega$ and $R_2 = 20\\Omega$ mắc vào nguồn điện có hiệu điện thế không đổi.", sts: [ 
             { l: "a)", t: "Nếu mắc nối tiếp, cường độ dòng điện qua $R_1$ lớn hơn qua $R_2$.", a: false }, 
             { l: "b)", t: "Nếu mắc nối tiếp, điện trở tương đương của mạch là $30\\Omega$.", a: true }, 
             { l: "c)", t: "Nếu mắc song song, hiệu điện thế trên $R_1$ bằng hiệu điện thế trên $R_2$.", a: true }, 
             { l: "d)", t: "Nếu mắc song song, dòng điện qua $R_1$ nhỏ hơn dòng điện qua $R_2$.", a: false } 
         ], e: "Nối tiếp thì $I$ bằng nhau. Song song thì điện trở nhỏ hơn ($R_1$) sẽ có dòng điện lớn hơn." },
         { ctx: "Về sự phụ thuộc của điện trở vào các yếu tố của dây dẫn.", sts: [ 
-            { l: "a)", t: "Điện trở dây dẫn tỉ lệ thuận với chiều dài dây.", a: true }, 
+            { l: "a)", t: "Điện trở dây dẫn tỉ lệ thuận with chiều dài dây.", a: true }, 
             { l: "b)", t: "Dây dẫn càng dài thì khả năng cản trở dòng điện càng ít.", a: false }, 
-            { l: "c)", t: "Điện trở dây dẫn tỉ lệ nghịch với tiết diện dây.", a: true }, 
+            { l: "c)", t: "Điện trở dây dẫn tỉ lệ nghịch with tiết diện dây.", a: true }, 
             { l: "d)", t: "Điện trở suất đặc trưng cho tính chất của vật liệu làm dây dẫn.", a: true } 
         ], e: "Dây càng dài điện trở càng lớn, cản trở dòng điện càng nhiều." },
         { ctx: "Khi sử dụng biến trở trong mạch điện.", sts: [ 
@@ -470,12 +480,12 @@ const QUESTION_BANK = {
             { l: "b)", t: "Biến trở dùng để điều chỉnh cường độ dòng điện trong mạch.", a: true }, 
             { l: "c)", t: "Ký hiệu của biến trở trong sơ đồ mạch điện giống hệt điện trở cố định.", a: false }, 
             { l: "d)", t: "Khi dịch chuyển con chạy, chiều dài phần dây dẫn tham gia vào mạch thay đổi.", a: true } 
-        ], e: "Biến trở có ký hiệu riêng với mũi tên chỉ sự thay đổi." }
+        ], e: "Biến trở có ký hiệu riêng with mũi tên chỉ sự thay đổi." }
     ],
     short: [
         { q: "Mắc một bóng đèn có điện trở $12\\Omega$ vào hiệu điện thế $6V$. Tính cường độ dòng điện (đơn vị Ampe) chạy qua đèn?", a: "0,5", e: "Công thức: $I = U/R = 6/12 = 0,5$ A." },
         { q: "Đặt hiệu điện thế $12V$ vào hai đầu một dây dẫn thì dòng điện qua nó là $0,2A$. Điện trở của dây dẫn này là bao nhiêu Ohm?", a: "60", e: "Công thức: $R = U/I = 12/0,2 = 60 \\Omega$." },
-        { q: "Một dây dẫn dài $20m$ có điện trở $4\\Omega$. Nếu cắt dây dẫn đó thành các đoạn ngắn dài $5m$ thì mỗi đoạn có điện trở là bao nhiêu Ohm?", a: "1", e: "Vì điện trở tỉ lệ thuận với chiều dài. Chiều dài giảm 4 lần thì điện trở giảm 4 lần ($4/4 = 1$)." },
+        { q: "Một dây dẫn dài $20m$ có điện trở $4\\Omega$. Nếu cắt dây dẫn đó thành các đoạn ngắn dài $5m$ thì mỗi đoạn có điện trở là bao nhiêu Ohm?", a: "1", e: "Vì điện trở tỉ lệ thuận with chiều dài. Chiều dài giảm 4 lần thì điện trở giảm 4 lần ($4/4 = 1$)." },
         { q: "Điện trở của một dây dẫn là $10\\Omega$. Khi hiệu điện thế giữa hai đầu dây là $5V$, nếu tăng hiệu điện thế lên thành $15V$ thì cường độ dòng điện mới là bao nhiêu Ampe?", a: "1,5", e: "Cường độ ban đầu $I_1 = 5/10 = 0,5A$. U tăng 3 lần thì I tăng 3 lần ($0,5 \\cdot 3 = 1,5$)." }
     ]
 };
@@ -545,7 +555,6 @@ async function loadTimeConfig() {
 }
 
 const initGame = (m) => {
-    // FIXED: NHẬN DIỆN THÔNG TIN THÔNG MINH - NẾU KHÔNG NHẬP HOẶC KHÔNG CÓ Ô NHẬP THÌ MẶC ĐỊNH LÀ "input"
     const getVal = (id) => {
         const el = document.getElementById(id);
         return (el && el.value.trim()) ? el.value.trim() : "input";
@@ -561,6 +570,9 @@ const initGame = (m) => {
 
     mode = m;
     isQuizRunning = true; 
+    canCheckCheat = false; // Luôn tắt kiểm tra gian lận khi mới bắt đầu cấu hình
+    isProcessingCheat = false;
+
     currentExam = [
         ...shuffle([...QUESTION_BANK.mcq]).slice(0, 12).map((q, i) => ({...q, id: `p1_${i}`, type: 'mcq', section: 'Phần I. Đa lựa chọn (12 câu)', displayNum: i+1})),
         ...shuffle([...QUESTION_BANK.tf]).slice(0, 4).map((q, i) => ({...q, id: `p2_${i}`, type: 'tf', section: 'Phần II. Đúng/Sai (4 câu)', displayNum: i+1})),
@@ -569,16 +581,37 @@ const initGame = (m) => {
     userAnswers = {}; currentIdx = 0; 
     timeLeft = (mode === 'test') ? testTimeLimit : practiceTimeLimit;
     quizStartTime = Date.now();
+    
+    // Hiển thị lớp phủ thông điệp
     document.getElementById('wish-overlay').style.display = 'flex';
     document.getElementById('wish-cheat-info').style.display = (mode === 'test') ? 'block' : 'none';
     startFire();
-    if(mode === 'test') try { document.documentElement.requestFullscreen(); } catch(e) {}
-    setTimeout(() => {
-        if(document.getElementById('wish-overlay').style.display === 'none') return;
+
+    // SỬA LỖI: Kích hoạt chế độ chống gian lận ngay sau khi yêu cầu Toàn màn hình
+    if(mode === 'test') {
+        document.documentElement.requestFullscreen().then(() => {
+            // Khi đã vào toàn màn hình thành công, kích hoạt giám sát ngay
+            canCheckCheat = true;
+        }).catch(e => {
+            alert("Lỗi: Bạn cần đồng ý Toàn màn hình để thực hiện bài thi này.");
+            location.reload();
+        });
+    }
+
+    // Sau khi màn hình CỐ LÊN kết thúc (5 giây)
+    wishTimeoutId = setTimeout(() => {
+        if(!isQuizRunning) return; // Nếu đã bị ngắt do gian lận trong lúc overlay
         document.getElementById('wish-overlay').style.display = 'none';
         cancelAnimationFrame(fireRequest);
+        
+        // Hiển thị giao diện bài làm
         document.getElementById('main-header').style.display = 'flex';
-        showScreen('screen-quiz'); renderQuestion(); startTimer();
+        showScreen('screen-quiz'); 
+        renderQuestion(); 
+        startTimer();
+
+        // Với chế độ luyện tập, bật canCheckCheat sau overlay
+        if(mode === 'practice') canCheckCheat = true;
     }, 5000);
 };
 
@@ -646,8 +679,15 @@ function renderQuestion() {
 }
 
 async function calculateResult() {
-    if(!isQuizRunning) return;
-    isQuizRunning = false; clearInterval(timerInt); audioFinish.play().catch(()=>{});
+    if(!isQuizRunning && !isProcessingCheat) return;
+    
+    // Ngắt mọi tiến trình đang chờ
+    if(wishTimeoutId) clearTimeout(wishTimeoutId);
+    isQuizRunning = false; 
+    canCheckCheat = false; 
+    clearInterval(timerInt); 
+    audioFinish.play().catch(()=>{});
+
     const dur = Math.floor((Date.now() - quizStartTime) / 1000);
     let score = 0;
     const tfMap = {0:0, 1:0.05, 2:0.125, 3:0.25, 4:0.5};
@@ -660,11 +700,16 @@ async function calculateResult() {
         } else if(q.type === 'short' && norm(userAnswers[q.id]||'') === norm(q.a)) score += 0.5;
     });
     const fs = parseFloat(Math.min(7, score).toFixed(1));
+    
+    // Ẩn lớp phủ nếu đang ở overlay
+    document.getElementById('wish-overlay').style.display = 'none';
+    cancelAnimationFrame(fireRequest);
+
     showScreen('screen-result'); document.getElementById('main-header').style.display = 'none';
     document.getElementById('final-score').innerText = fs.toFixed(1);
     const u = window.finalUserData;
-    document.getElementById('res-name').innerText = u.name.toUpperCase();
-    document.getElementById('res-meta').innerText = `${u.sch} | Lớp ${u.cls} | SBD ${u.sbd}`;
+    document.getElementById('res-name').innerText = (u.name || "input").toUpperCase();
+    document.getElementById('res-meta').innerText = `${u.sch || "input"} | Lớp ${u.cls || "input"} | SBD ${u.sbd || "input"}`;
     
     let rb = document.getElementById('rank-badge'), txt = 'CHƯA ĐẠT', col = '#64748b';
     if(fs >= 6.3) { txt='XUẤT SẮC'; col='#f59e0b'; } else if(fs >= 5.6) { txt='GIỎI'; col='#10b981'; } else if(fs >= 4.5) { txt='KHÁ'; col='#3b82f6'; } else if(fs >= 3.5) { txt='ĐẠT'; col='#8b5cf6'; }
@@ -725,7 +770,7 @@ async function renderAdmin() {
         statsBox.innerHTML = `<div class="stat-box"><b>${s.xs}</b><br><small>X.Sắc</small></div><div class="stat-box"><b>${s.g}</b><br><small>Giỏi</small></div><div class="stat-box"><b>${s.k}</b><br><small>Khá</small></div><div class="stat-box"><b>${s.d}</b><br><small>Đạt</small></div><div class="stat-box" style="border-color:red"><b>${s.cd}</b><br><small>C.Đạt</small></div>`;
         listBody.innerHTML = data.map((i, idx) => `<tr><td>${idx+1}</td><td>${i.sbd}</td><td>${i.name}</td><td>${i.class}</td><td>${i.school||'-'}</td><td><span class="badge-mode ${i.mode === 'practice' ? 'badge-practice' : 'badge-test'}">${i.mode === 'practice' ? 'Luyện tập' : 'Kiểm tra'}</span></td><td><b>${(i.score||0).toFixed(1)}</b></td><td>${i.duration}s</td><td>${new Date(i.timestamp).toLocaleDateString()}</td><td><button style="background:red; color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer" class="btn-del" data-id="${i.id}">X</button></td></tr>`).join('');
         listBody.querySelectorAll('.btn-del').forEach(b => b.onclick = () => deleteEntry(b.dataset.id));
-        window.currentFilteredData = data; // Lưu dữ liệu đã lọc để xuất Excel
+        window.currentFilteredData = data; 
     } catch(e) { listBody.innerHTML = "<tr><td colspan='10'>Lỗi kết nối Firebase.</td></tr>"; }
 }
 
@@ -740,7 +785,7 @@ document.getElementById('btn-save-config').onclick = async () => {
 
 document.getElementById('btn-admin-open').onclick = () => document.getElementById('admin-auth-modal').style.display = 'flex';
 document.getElementById('btn-auth-cancel').onclick = () => document.getElementById('admin-auth-modal').style.display = 'none';
-document.getElementById('btn-auth-confirm').onclick = () => { if(document.getElementById('admin-pw').value === "THCSTHUYPHUONG") { document.getElementById('admin-auth-modal').style.display='none'; showScreen('screen-admin'); renderAdmin(); } else alert("Sai mật khẩu!"); };
+document.getElementById('btn-auth-confirm').onclick = () => { if(document.getElementById('admin-pw').value === "112233@@") { document.getElementById('admin-auth-modal').style.display='none'; showScreen('screen-admin'); renderAdmin(); } else alert("Sai mật khẩu!"); };
 
 document.getElementById('btn-init-practice').onclick = () => initGame('practice');
 document.getElementById('btn-init-test').onclick = () => initGame('test');
@@ -802,12 +847,10 @@ document.getElementById('btn-view-review').onclick = () => {
     if (target) { setTimeout(async () => { const y = target.getBoundingClientRect().top + window.pageYOffset - 20; window.scrollTo({ top: y, behavior: 'smooth' }); if(window.MathJax) await MathJax.typesetPromise([content]); }, 150); }
 };
 
-// --- CHỨC NĂNG XUẤT EXCEL NÂNG CAO ---
 document.getElementById('btn-export-excel').onclick = () => {
     const dataToExport = window.currentFilteredData || [];
     if (dataToExport.length === 0) { showCustomAlert("Không có dữ liệu để xuất!"); return; }
 
-    // Chuyển đổi dữ liệu sang tiếng Việt chuyên nghiệp
     const excelRows = dataToExport.map((item, index) => ({
         "STT": index + 1,
         "Họ và Tên": item.name || "input",
@@ -821,19 +864,7 @@ document.getElementById('btn-export-excel').onclick = () => {
     }));
 
     const ws = XLSX.utils.json_to_sheet(excelRows);
-    
-    // Tự động căn chỉnh độ rộng cột
-    const wscols = [
-        {wch: 5},  // STT
-        {wch: 25}, // Họ tên
-        {wch: 12}, // SBD
-        {wch: 10}, // Lớp
-        {wch: 25}, // Trường
-        {wch: 15}, // Chế độ
-        {wch: 10}, // Điểm
-        {wch: 18}, // Thời gian
-        {wch: 25}  // Ngày nộp
-    ];
+    const wscols = [{wch: 5}, {wch: 25}, {wch: 12}, {wch: 10}, {wch: 25}, {wch: 15}, {wch: 10}, {wch: 18}, {wch: 25}];
     ws['!cols'] = wscols;
 
     const wb = XLSX.utils.book_new();
@@ -845,10 +876,39 @@ function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.cl
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60), s = timeLeft%60, el = document.getElementById('timer'); if(el) el.innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
 
-const triggerCheat = () => { if (isQuizRunning && mode === 'test') { calculateResult(); document.getElementById('cheat-modal').style.display = 'flex'; } };
-document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && isQuizRunning && mode === 'test') triggerCheat(); });
-document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') triggerCheat(); });
-window.addEventListener('blur', triggerCheat);
+// --- CHỐNG GIAN LẬN: SỬA LỖI XUNG ĐỘT MÀN HÌNH CHỜ ---
+const triggerCheat = () => { 
+    if (canCheckCheat && isQuizRunning && mode === 'test' && !isProcessingCheat) { 
+        isProcessingCheat = true;
+        isQuizRunning = false; 
+        calculateResult(); 
+        document.getElementById('cheat-modal').style.display = 'flex'; 
+    } 
+};
+
+// Theo dõi sự thay đổi toàn màn hình: ngắt ngay nếu thoát
+document.addEventListener('fullscreenchange', () => { 
+    if (canCheckCheat && isQuizRunning && mode === 'test' && !document.fullscreenElement) {
+        triggerCheat(); 
+    }
+});
+
+// Theo dõi tab ẩn: ngắt ngay
+document.addEventListener('visibilitychange', () => { 
+    if(canCheckCheat && isQuizRunning && mode === 'test' && document.visibilityState === 'hidden') {
+        triggerCheat(); 
+    }
+});
+
+// Theo dõi mất tiêu điểm cửa sổ: ngắt ngay
+window.addEventListener('blur', () => {
+    // Độ trễ ngắn để tránh xung đột hệ thống khi overlay chuyển động
+    setTimeout(() => {
+        if (canCheckCheat && isQuizRunning && mode === 'test' && !document.hasFocus()) {
+            triggerCheat();
+        }
+    }, 500);
+});
 
 window.onload = () => { 
     document.getElementById('main-header').style.display = 'none'; 
@@ -856,9 +916,11 @@ window.onload = () => {
     if(localStorage.getItem('vly9_s')) document.getElementById('user_school').value = localStorage.getItem('vly9_s');
     if(localStorage.getItem('vly9_c')) document.getElementById('user_class').value = localStorage.getItem('vly9_c');
 };
+
 document.getElementById('username').oninput = (e) => localStorage.setItem('vly9_u', e.target.value);
 document.getElementById('user_school').oninput = (e) => localStorage.setItem('vly9_s', e.target.value);
 document.getElementById('user_class').oninput = (e) => localStorage.setItem('vly9_c', e.target.value);
 </script>
 </body>
 </html>
+<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT -->
