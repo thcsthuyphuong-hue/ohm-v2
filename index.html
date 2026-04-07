@@ -1,10 +1,10 @@
-<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT -->
+<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT - CẬP NHẬT CHUYÊN ĐỀ THẤU KÍNH & FIREBASE MỚI -->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vật lý 9 - Điện trở & Định luật Ohm</title>
+    <title>Vật lý 9 - Bài 8: Thấu kính</title>
     <!-- Hỗ trợ công thức Toán/Lý -->
     <script>
         window.MathJax = {
@@ -259,7 +259,7 @@
     <section id="screen-start" class="screen active">
         <div class="school-brand">
             <h1 class="fire-text" style="font-size: 2.2rem;">ÔN TẬP VẬT LÝ 9</h1>
-            <p style="color:white; opacity:0.8; margin-top:5px;">Chuyên đề: Điện trở - Định luật Ohm</p>
+            <p style="color:white; opacity:0.8; margin-top:5px;">Chuyên đề: Bài 8. Thấu kính</p>
         </div>
 
         <div class="card" style="max-width: 550px; margin: -40px auto 30px auto; position: relative; z-index: 2; display: block;">
@@ -273,7 +273,7 @@
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <button id="btn-init-practice" class="btn btn-gray">LUYỆT TẬP</button>
+                <button id="btn-init-practice" class="btn btn-gray">LUYỆN TẬP</button>
                 <button id="btn-init-test" class="btn btn-fire">KIỂM TRA</button>
             </div>
         </div>
@@ -394,25 +394,37 @@
     </div>
 </div>
 
+<div id="delete-auth-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20001; display:none; justify-content:center; align-items:center;">
+    <div class="card" style="width:100%; max-width:400px; text-align:center; border: 4px solid var(--danger);">
+        <h2 style="color: var(--danger)">Xác nhận Xoá</h2>
+        <p style="margin-bottom: 15px; color: #475569;">Hành động này không thể hoàn tác. Vui lòng nhập mật khẩu để xoá:</p>
+        <input type="password" id="delete-pw" placeholder="Mật khẩu xoá..." style="margin-bottom:20px; outline:none; border:2px solid var(--danger);">
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-gray" style="flex:1" id="btn-delete-cancel">HỦY</button>
+            <button class="btn btn-fire" style="flex:1; background: var(--danger);" id="btn-delete-confirm">XOÁ NGAY</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDg4Q6rsrvPhY31oCpL4DAAjTKlgjJN1c0",
-    authDomain: "khtn9-5c1f4.firebaseapp.com",
-    projectId: "khtn9-5c1f4",
-    storageBucket: "khtn9-5c1f4.firebasestorage.app",
-    messagingSenderId: "498407772914",
-    appId: "1:498407772914:web:8ec0ed711675a96a42366b",
-    measurementId: "G-GPZSP2DR92"
+    apiKey: "AIzaSyD9lyDnPqYCSHx2WKUPbPBgVrQT-IzloQU",
+    authDomain: "test-fef79.firebaseapp.com",
+    projectId: "test-fef79",
+    storageBucket: "test-fef79.firebasestorage.app",
+    messagingSenderId: "238727028560",
+    appId: "1:238727028560:web:44a464e1fec691ff099655",
+    measurementId: "G-ZCR523T664"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId_fixed = 'kham-pha-vat-ly-9';
+const appId_fixed = 'khtn9-thau-kinh-v1';
 const collectionName = 'quiz_results'; 
 
 let currentUser = null, quizStartTime = 0, isQuizRunning = false, mode = '', currentIdx = 0, userAnswers = {}, timeLeft = 0, timerInt, currentExam = [];
@@ -423,10 +435,10 @@ const audioFinish = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing
 let practiceTimeLimit = 2700;
 let testTimeLimit = 2700;
 
-// CỜ CHỐNG GIAN LẬN - SỬA LỖI
+// CỜ CHỐNG GIAN LẬN
 let canCheckCheat = false; 
 let isProcessingCheat = false;
-let wishTimeoutId = null; // Quản lý timer của màn hình "CỐ LÊN"
+let wishTimeoutId = null; 
 
 document.addEventListener('copy', (e) => { e.preventDefault(); return false; });
 document.addEventListener('keydown', (e) => {
@@ -443,50 +455,90 @@ onAuthStateChanged(auth, async user => {
 
 const QUESTION_BANK = {
     mcq: [
-        { q: "Đại lượng đặc trưng cho mức độ cản trở dòng điện của vật dẫn được gọi là", a: "Điện trở.", o: ["Cường độ dòng điện.", "Hiệu điện thế.", "Điện trở.", "Công suất điện."], e: "Điện trở biểu thị tính chất cản trở dòng điện của dây dẫn." },
-        { q: "Trong hệ SI, đơn vị của điện trở là gì?", a: "Ohm ($\\Omega$)", o: ["Ampere (A)", "Volt (V)", "Ohm ($\\Omega$)", "Watt (W)"], e: "Ohm ($\\Omega$) là đơn vị chuẩn đo điện trở." },
-        { q: "Nội dung định luật Ohm cho biết cường độ dòng điện chạy qua một dây dẫn", a: "tỉ lệ thuận với hiệu điện thế giữa hai đầu dây.", o: ["tỉ lệ thuận with điện trở.", "tỉ lệ nghịch với hiệu điện thế.", "tỉ lệ thuận với hiệu điện thế giữa hai đầu dây.", "không phụ thuộc vật liệu."], e: "Hệ thức $I = U/R$ cho thấy $I$ và $U$ tỉ lệ thuận." },
-        { q: "Nếu hiệu điện thế $U$ giữa hai đầu điện trở tăng 3 lần thì cường độ dòng điện $I$ qua điện trở đó sẽ", a: "tăng lên 3 lần.", o: ["giảm 3 lần.", "tăng lên 3 lần.", "không đổi.", "tăng 9 lần."], e: "$I$ tỉ lệ thuận with $U$ theo định luật Ohm." },
-        { q: "Đồ thị biểu diễn mối quan hệ giữa cường độ dòng điện $I$ and hiệu điện thế $U$ của một điện trở là", a: "một đường thẳng đi qua gốc tọa độ.", o: ["đường cong parabol.", "một đường thẳng đi qua gốc tọa độ.", "đường thẳng song song trục hoành.", "đường tròn."], e: "$I = (1/R) \\cdot U$ là phương trình đường thẳng qua gốc O.", img: "https://images.vungoi.vn/images/2021/01/5e7300f89ed20a273b063162-1611738221.png" },
-        { q: "Công thức xác định điện trở của một dây dẫn hình trụ, đồng chất có chiều dài $l$, tiết diện $S$ và điện trở suất $\\rho$ là", a: "$R = \\rho\\frac{l}{S}$", o: ["$R = \\rho\\frac{S}{l}$", "$R = \\rho\\frac{l}{S}$", "$R = \\frac{S}{\\rho l}$", "$R = \\frac{l}{\\rho S}$"], e: "Điện trở $R$ tỉ lệ thuận with chiều dài $l$ và tỉ lệ nghịch with tiết diện $S$." },
-        { q: "Khi dịch chuyển con chạy của biến trở sang phải (như hình), điện trở của biến trở tham gia vào mạch sẽ thay đổi thế nào?", a: "Tăng lên.", o: ["Tăng lên.", "Giảm đi.", "Không đổi.", "Lúc tăng lúc giảm."], e: "Dịch chuyển sang phải làm tăng chiều dài phần dây dẫn của biến trở tham gia vào mạch, do đó điện trở tăng.", img: "https://hoctot.nam.name.vn/Images/BaiHoc/vat-li-9/bai-10-bien-tro-dien-tro-dung-trong-ki-thuat/bai-10-hinh-102.png" },
-        { q: "Hai điện trở $R_1$ và $R_2$ mắc nối tiếp. Biết $R_1 = 3 R_2$, cường độ dòng điện qua các điện trở quan hệ như thế nào?", a: "$I_1 = I_2$", o: ["$I_1 = 3 I_2$", "$I_2 = 3 I_1$", "$I_1 = I_2$", "$I_1 = 9 I_2$"], e: "Trong mạch nối tiếp, cường độ dòng điện tại mọi điểm là như nhau." },
-        { q: "Đối với đoạn mạch gồm hai điện trở $R_1$ and $R_2$ mắc song song, hệ thức nào sau đây là đúng?", a: "$U_1 = U_2$", o: ["$U_1 = 3 U_2$", "$U_1 = U_2$", "$U_{tđ} = U_1 + U_2$", "$I_1 = I_2$"], e: "Trong mạch song song, hiệu điện thế giữa hai đầu mỗi nhánh là bằng nhau." },
-        { q: "Đặt hiệu điện thế $U = 12V$ vào hai đầu một điện trở $R = 24\\Omega$. Cường độ dòng điện qua điện trở là", a: "0,5 A", o: ["0,5 A", "2,0 A", "12 A", "288 A"], e: "$I = U/R = 12/24 = 0,5$ A." },
-        { q: "Đơn vị của điện trở suất $\\rho$ trong hệ SI là", a: "Ohm.mét ($\\Omega \\cdot m$)", o: ["Ohm ($\\Omega$)", "Ohm/mét ($\\Omega/m$)", "Ohm.mét ($\\Omega \\cdot m$)", "Ohm.mét vuông ($\\Omega \\cdot m^2$)"], e: "Điện trở suất có đơn vị chuẩn là Ohm.mét." },
-        { q: "Hai dây dẫn bằng đồng có cùng chiều dài, dây thứ nhất có tiết diện gấp đôi dây thứ hai. So sánh điện trở của chúng?", a: "$R_2 = 2 R_1$", o: ["$R_1 = 2 R_2$", "$R_2 = 2 R_1$", "$R_1 = R_2$", "$R_1 = 4 R_2$"], e: "Điện trở tỉ lệ nghịch with tiết diện. Tiết diện lớn gấp đôi thì điện trở nhỏ đi một nửa." }
+        { q: "Công thức tính điện trở của một đoạn dây dẫn hình trụ đồng chất có chiều dài l, tiết diện S và điện trở suất $\\rho$ là", a: "$R = \\rho\\frac{l}{S}$", o: ["$R = \\rho\\frac{S}{l}$", "$R = \\rho\\frac{l}{S}$", "$R = \\frac{l}{\\rho S}$", "$R = \\frac{S}{\\rho l}$"], e: "Phương án B đúng vì điện trở của dây dẫn tỉ lệ thuận với chiều dài l, tỉ lệ nghịch với tiết diện S và phụ thuộc vào vật liệu làm dây dẫn." },
+        { q: "Đối với đoạn mạch gồm hai điện trở $R_1$ và $R_2$ mắc nối tiếp, công thức tính điện trở tương đương $R_{tđ}$ của đoạn mạch là", a: "$R_{tđ} = R_1 + R_2$", o: ["$R_{tđ} = R_1 - R_2$", "$R_{tđ} = R_1 + R_2$", "$R_{tđ} = \\frac{R_1 R_2}{R_1 + R_2}$", "$\\frac{1}{R_{tđ}} = \\frac{1}{R_1} + \\frac{1}{R_2}$"], e: "Phương án B đúng. Đoạn mạch mắc nối tiếp có điện trở tương đương bằng tổng các điện trở thành phần." },
+        { q: "Đối với đoạn mạch gồm hai điện trở $R_1$ và $R_2$ mắc song song, công thức tính điện trở tương đương $R_{tđ}$ của đoạn mạch là", a: "$\\frac{1}{R_{tđ}} = \\frac{1}{R_1} + \\frac{1}{R_2}$", o: ["$R_{tđ} = R_1 + R_2$", "$R_{tđ} = \\frac{R_1 + R_2}{R_1 R_2}$", "$R_{tđ} = R_1 - R_2$", "$\\frac{1}{R_{tđ}} = \\frac{1}{R_1} + \\frac{1}{R_2}$"], e: "Phương án D đúng. Đối với mạch mắc song song, nghịch đảo điện trở tương đương bằng tổng nghịch đảo các điện trở thành phần." },
+        { q: "Điện trở của một dây dẫn thể hiện đặc tính nào sau đây đối với dòng điện chạy qua nó?", a: "Cản trở dòng điện trong mạch.", o: ["Hỗ trợ cho dòng điện chạy qua dễ dàng hơn.", "Làm thay đổi chiều của dòng điện trong mạch.", "Cản trở dòng điện trong mạch.", "Biến đổi dòng điện một chiều thành dòng điện xoay chiều."], e: "Phương án C đúng vì theo định nghĩa, điện trở là đại lượng vật lí đặc trưng cho mức độ cản trở dòng điện của vật dẫn." },
+        { q: "Định luật Ôm đối với đoạn mạch có điện trở được phát biểu là: Cường độ dòng điện đi qua một đoạn dây dẫn", a: "tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó.", o: ["tỉ lệ nghịch với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ thuận với điện trở của nó.", "tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó.", "tỉ lệ thuận với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ thuận với điện trở của nó.", "tỉ lệ nghịch với hiệu điện thế giữa hai đầu đoạn dây và tỉ lệ nghịch với điện trở của nó."], e: "Phương án B đúng vì theo định luật Ôm, dòng điện I tỉ lệ thuận với U (tăng U thì I tăng) và tỉ lệ nghịch với R (R càng lớn cản trở càng mạnh nên I giảm)." },
+        { q: "Hệ thức nào sau đây là công thức đúng của định luật Ohm?", a: "$I = \\frac{U}{R}$", o: ["$I = U.R$", "$U = \\frac{I}{R}$", "$I = \\frac{U}{R}$", "$R = U.I$"], e: "Phương án C đúng vì định luật Ohm biểu diễn cường độ dòng điện I bằng thương số giữa hiệu điện thế U và điện trở R." },
+        { q: "Trong công thức của định luật Ohm, đơn vị chuẩn của cường độ dòng điện (I), hiệu điện thế (U) và điện trở (R) lần lượt là", a: "ampere (A), volt (V), ohm ($\\Omega$).", o: ["volt (V), ampere (A), ohm ($\\Omega$).", "ampere (A), volt (V), ohm ($\\Omega$).", "ohm ($\\Omega$), volt (V), ampere (A).", "ampere (A), ohm ($\\Omega$), volt (V)."], e: "Phương án B đúng vì I đo bằng ampere (A), U đo bằng volt (V), và R đo bằng ohm ($\\Omega$)." },
+        { q: "Đại lượng R trong công thức định luật Ohm có ý nghĩa vật lí là gì?", a: "Đặc trưng cho mức độ cản trở dòng điện của đoạn dây dẫn.", o: ["Đo mức độ cung cấp năng lượng của nguồn điện.", "Chỉ sự dịch chuyển có hướng của các electron.", "Là độ chênh lệch điện thế giữa hai đầu dây.", "Đặc trưng cho mức độ cản trở dòng điện của đoạn dây dẫn."], e: "Phương án D đúng vì R là điện trở, đặc trưng cho mức độ cản trở dòng điện của vật dẫn." },
+        { q: "Tiến hành thí nghiệm: Lắp một bóng đèn pin nối tiếp với một ampe kế và một nguồn điện. Ghi lại số chỉ ampe kế. Sau đó, mắc nối tiếp thêm một điện trở R vào mạch. Nhận xét nào sau đây là đúng về hiện tượng xảy ra?", a: "Bóng đèn sáng yếu đi, số chỉ ampe kế giảm.", o: ["Bóng đèn sáng mạnh hơn, số chỉ ampe kế tăng.", "Bóng đèn sáng yếu đi, số chỉ ampe kế giảm.", "Bóng đèn sáng bình thường, số chỉ ampe kế không đổi.", "Bóng đèn đứt dây tóc ngay lập tức."], e: "Phương án B đúng vì việc mắc thêm điện trở R vào mạch làm tăng điện trở tương đương, dẫn đến dòng điện trong mạch giảm xuống. Đèn sáng yếu đi." },
+        { q: "Để làm thí nghiệm chứng minh mức độ cản trở dòng điện của các điện trở khác nhau, một học sinh lần lượt mắc vào mạch điện có hiệu điện thế không đổi các điện trở $R_1 = 10 \\Omega$ và $R_2 = 20 \\Omega$. So sánh cường độ dòng điện $I_1$ và $I_2$ trong mạch tương ứng với hai lần đo, kết quả nào sau đây là đúng?", a: "$I_1 > I_2$", o: ["$I_1 = I_2$", "$I_1 > I_2$", "$I_1 < I_2$", "$I_1 = 2 I_2 = 0$"], e: "Phương án B đúng vì $R_2$ lớn hơn $R_1$, cản trở mạnh hơn. Với cùng hiệu điện thế, cường độ dòng điện sẽ nhỏ hơn, suy ra $I_1 > I_2$." },
+        { q: "Từ kết quả thí nghiệm đo I và U của một đoạn dây dẫn điện trở không đổi, đồ thị vẽ được có dạng là", a: "một đường thẳng đi qua gốc tọa độ.", o: ["một đường cong parabol đi qua gốc tọa độ.", "một đường thẳng song song với trục hoành U.", "một đường thẳng đi qua gốc tọa độ.", "một đường hyperbol phân nhánh."], e: "Phương án C đúng vì theo thí nghiệm xây dựng định luật Ohm, cường độ dòng điện tỉ lệ thuận với hiệu điện thế. Đồ thị là một đường thẳng đi qua gốc toạ độ." },
+        { q: "Trong thí nghiệm khảo sát sự phụ thuộc của I vào U, nếu học sinh giữ nguyên điện trở của dây dẫn và tăng hiệu điện thế đặt vào hai đầu dây dẫn lên 3 lần thì cường độ dòng điện qua dây dẫn sẽ", a: "tăng lên 3 lần.", o: ["giảm đi 3 lần.", "tăng lên 3 lần.", "không thay đổi.", "tăng lên 9 lần."], e: "Phương án B đúng. Thí nghiệm cho thấy cường độ dòng điện tỉ lệ thuận với hiệu điện thế khi R không đổi. U tăng 3 thì I tăng 3." },
+        { q: "Khi tiến hành đo dòng điện qua hai điện trở khác nhau $R_1$ và $R_2$ nhưng cùng đặt dưới một mức hiệu điện thế U xác định. Biết $R_1 = 3 R_2$. Kết luận rút ra từ số liệu thí nghiệm cho cường độ dòng điện là", a: "$I_2 = 3 I_1$", o: ["$I_1 = 3 I_2$", "$I_2 = 3 I_1$", "$I_1 = I_2$", "$I_1 = 9 I_2$"], e: "Phương án B đúng. I tỉ lệ nghịch với R khi U không đổi. Vì $R_1 = 3 R_2$ nên dòng điện $I_1$ sẽ nhỏ bằng 1/3 dòng điện $I_2$." },
+        { q: "Một đoạn dây dẫn bằng đồng có chiều dài $l = 4$ m, tiết diện $S = 0,2 \\times 10^{-6} m^2$ và điện trở suất $\\rho = 1,7 \\times 10^{-8} \\Omega m$. Điện trở của đoạn dây đồng này là", a: "$0,34 \\Omega$", o: ["$0,34 \\Omega$", "$0,17 \\Omega$", "$3,4 \\Omega$", "$1,7 \\Omega$"], e: "Phương án A đúng. Áp dụng công thức $R = \\rho\\frac{l}{S} = 1,7 \\times 10^{-8} \\times \\frac{4}{0,2 \\times 10^{-6}} = 0,34 \\Omega$." },
+        { q: "Một dây nhôm dài 10 m, có điện trở là $1,4 \\Omega$. Nếu cắt lấy một đoạn dây dài 5 m từ dây nhôm trên (tiết diện giữ nguyên) thì đoạn dây 5 m này có điện trở là", a: "$0,7 \\Omega$", o: ["$2,8 \\Omega$", "$0,7 \\Omega$", "$1,4 \\Omega$", "$5,6 \\Omega$"], e: "Phương án B đúng. Điện trở R tỉ lệ thuận với chiều dài l. Chiều dài giảm đi một nửa nên điện trở cũng giảm đi một nửa: $1,4 / 2 = 0,7 \\Omega$." },
+        { q: "Hai dây dẫn bằng sắt có cùng chiều dài l. Dây thứ nhất có tiết diện $S_1 = 1 mm^2$, dây thứ hai có tiết diện $S_2 = 2 mm^2$. Gọi $R_1, R_2$ là điện trở của hai dây. Hệ thức nào sau đây đúng?", a: "$R_1 = 2 R_2$", o: ["$R_1 = 2 R_2$", "$R_2 = 2 R_1$", "$R_1 = R_2$", "$R_1 = 4 R_2$"], e: "Phương án A đúng. Điện trở tỉ lệ nghịch với tiết diện. Do $S_2 = 2 S_1$ nên $R_2 = \\frac{R_1}{2}$, tức là $R_1 = 2 R_2$." },
+        { q: "Có một dây dẫn điện trở R. Nếu ta cắt dây dẫn này thành hai đoạn bằng nhau rồi chập hai đầu của chúng lại với nhau (mắc song song) thì điện trở của sợi dây mới chập bằng", a: "$\\frac{R}{4}$", o: ["R", "$2 R$", "$\\frac{R}{4}$", "$\\frac{R}{2}$"], e: "Phương án C đúng. Cắt làm đôi thì điện trở mỗi đoạn là $R/2$. Khi chập lại, điện trở tương đương là $\\frac{R/2}{2} = \\frac{R}{4}$." },
+        { q: "Một cuộn dây đồng có điện trở suất $\\rho$, khối lượng riêng D, khối lượng m và tiết diện S. Biểu thức tính điện trở R của cuộn dây này theo các đại lượng đã cho là", a: "$R = \\rho\\frac{m}{D.S^2}$", o: ["$R = \\rho\\frac{m}{D.S^2}$", "$R = \\rho\\frac{m.S}{D}$", "$R = \\rho\\frac{D}{m.S^2}$", "$R = \\rho\\frac{D.S^2}{m}$"], e: "Phương án A đúng. Ta có thể tích $V = S.l = \\frac{m}{D} \\rightarrow l = \\frac{m}{D.S}$. Thay vào công thức: $R = \\rho\\frac{l}{S} = \\rho\\frac{m}{D.S^2}$." },
+        { q: "Một dây kim loại đồng chất, tiết diện đều có điện trở $10 \\Omega$. Nếu dùng máy kéo vuốt dây này sao cho chiều dài của nó tăng lên gấp 3 lần (vật liệu và thể tích không đổi) thì điện trở của dây mới sẽ là", a: "$90 \\Omega$", o: ["$30 \\Omega$", "$10 \\Omega$", "$3,33 \\Omega$", "$90 \\Omega$"], e: "Phương án D đúng. Thể tích không đổi, khi l tăng 3 lần thì S phải giảm 3 lần. Tử tăng 3, mẫu giảm 3 nên phân số tăng 9 lần. $9 \\times 10 = 90 \\Omega$." },
+        { q: "Một đoạn dây dẫn có điện trở $25 \\Omega$ được mắc vào mạch điện. Cường độ dòng điện qua dây là 0,4 A. Hiệu điện thế giữa hai đầu đoạn dây dẫn là", a: "10 V", o: ["25,4 V", "62,5 V", "10 V", "100 V"], e: "Phương án C đúng. Áp dụng định luật Ohm: $U = I.R = 0,4 \\times 25 = 10$ V." },
+        { q: "Mắc một bóng đèn có điện trở $12 \\Omega$ vào hiệu điện thế 6 V. Cường độ dòng điện chạy qua bóng đèn là", a: "0,5 A", o: ["2 A", "0,5 A", "72 A", "18 A"], e: "Phương án B đúng. Áp dụng công thức $I = \\frac{U}{R} = \\frac{6}{12} = 0,5$ A." },
+        { q: "Trong bảng số liệu báo cáo thí nghiệm khảo sát định luật Ohm với một điện trở cố định: Lần 1 đo được $U_1 = 3$ V, $I_1 = 0,15$ A; Lần 2 đo được $U_2 = 6$ V. Cường độ dòng điện $I_2$ ở lần 2 phải bằng", a: "0,30 A", o: ["0,15 A", "0,60 A", "0,30 A", "0,075 A"], e: "Phương án C đúng. I tỉ lệ thuận với U khi R cố định. $U_2 = 2 U_1$, nên $I_2 = 2 I_1 = 2 \\times 0,15 = 0,30$ A." },
+        { q: "Trong sơ đồ mạch điện thí nghiệm chứng minh điện trở cản trở dòng điện, để đo cường độ dòng điện đi qua điện trở R và hiệu điện thế hai đầu điện trở R, ta phải mắc dụng cụ đo như thế nào?", a: "Mắc ampe kế nối tiếp với R, vôn kế song song với R.", o: ["Mắc vôn kế nối tiếp với R, ampe kế song song với R.", "Mắc ampe kế nối tiếp với R, vôn kế song song với R.", "Mắc cả ampe kế và vôn kế song song với R.", "Mắc cả ampe kế và vôn kế nối tiếp với R."], e: "Phương án B đúng. Ampe kế đo dòng điện qua nhánh nên phải mắc nối tiếp. Vôn kế đo chênh lệch điện thế nên phải mắc song song." },
+        { q: "Cho hai điện trở $R_1 = 20 \\Omega$ và $R_2 = 30 \\Omega$ mắc song song với nhau vào hai điểm có hiệu điện thế U = 12 V. Cường độ dòng điện chạy trong mạch chính là", a: "1,0 A", o: ["1,0 A", "0,24 A", "4,16 A", "2,4 A"], e: "Phương án A đúng. $R_{tđ} = \\frac{20 \\times 30}{20 + 30} = 12 \\Omega$. Dòng mạch chính: $I = \\frac{12}{12} = 1,0$ A." }
     ],
     tf: [
-        { ctx: "Cho một dây dẫn có điện trở $R$. Đặt vào hai đầu dây dẫn một hiệu điện thế $U$ thì dòng điện qua nó là $I$.", sts: [ 
-            { l: "a)", t: "Cường độ dòng điện I tỉ lệ thuận with hiệu điện thế U.", a: true }, 
-            { l: "b)", t: "Khi điện trở R tăng lên 2 lần và U giữ nguyên thì I cũng tăng 2 lần.", a: false }, 
-            { l: "c)", t: "Đồ thị biểu diễn sự phụ thuộc của I vào U là một đường thẳng đi qua gốc tọa độ.", a: true }, 
-            { l: "d)", t: "Thương số $U/I$ đối với mỗi dây dẫn là một giá trị không đổi, gọi là điện trở R.", a: true } 
-        ], e: "Theo định luật Ohm, I tỉ lệ nghịch with R nên R tăng thì I phải giảm." },
-        { ctx: "Xét hai điện trở $R_1 = 10\\Omega$ and $R_2 = 20\\Omega$ mắc vào nguồn điện có hiệu điện thế không đổi.", sts: [ 
-            { l: "a)", t: "Nếu mắc nối tiếp, cường độ dòng điện qua $R_1$ lớn hơn qua $R_2$.", a: false }, 
-            { l: "b)", t: "Nếu mắc nối tiếp, điện trở tương đương của mạch là $30\\Omega$.", a: true }, 
-            { l: "c)", t: "Nếu mắc song song, hiệu điện thế trên $R_1$ bằng hiệu điện thế trên $R_2$.", a: true }, 
-            { l: "d)", t: "Nếu mắc song song, dòng điện qua $R_1$ nhỏ hơn dòng điện qua $R_2$.", a: false } 
-        ], e: "Nối tiếp thì $I$ bằng nhau. Song song thì điện trở nhỏ hơn ($R_1$) sẽ có dòng điện lớn hơn." },
-        { ctx: "Về sự phụ thuộc của điện trở vào các yếu tố của dây dẫn.", sts: [ 
-            { l: "a)", t: "Điện trở dây dẫn tỉ lệ thuận with chiều dài dây.", a: true }, 
-            { l: "b)", t: "Dây dẫn càng dài thì khả năng cản trở dòng điện càng ít.", a: false }, 
-            { l: "c)", t: "Điện trở dây dẫn tỉ lệ nghịch with tiết diện dây.", a: true }, 
-            { l: "d)", t: "Điện trở suất đặc trưng cho tính chất của vật liệu làm dây dẫn.", a: true } 
-        ], e: "Dây càng dài điện trở càng lớn, cản trở dòng điện càng nhiều." },
-        { ctx: "Khi sử dụng biến trở trong mạch điện.", sts: [ 
-            { l: "a)", t: "Biến trở là điện trở có thể thay đổi trị số.", a: true }, 
-            { l: "b)", t: "Biến trở dùng để điều chỉnh cường độ dòng điện trong mạch.", a: true }, 
-            { l: "c)", t: "Ký hiệu của biến trở trong sơ đồ mạch điện giống hệt điện trở cố định.", a: false }, 
-            { l: "d)", t: "Khi dịch chuyển con chạy, chiều dài phần dây dẫn tham gia vào mạch thay đổi.", a: true } 
-        ], e: "Biến trở có ký hiệu riêng with mũi tên chỉ sự thay đổi." }
+        { ctx: "Một nhóm học sinh thực hiện thí nghiệm đo I và U của một dây dẫn bằng nicrom và một dây dẫn bằng constantan. Nhóm vẽ được hai đồ thị biểu diễn sự phụ thuộc của I vào U cho hai dây dẫn này.", sts: [ 
+            { l: "a)", t: "Đồ thị thu được của cả hai dây dẫn đều là những đường thẳng đi qua gốc tọa độ O.", a: true }, 
+            { l: "b)", t: "Định luật Ohm khẳng định rằng cường độ dòng điện qua một dây dẫn tỉ lệ nghịch với hiệu điện thế đặt vào hai đầu dây đó.", a: false }, 
+            { l: "c)", t: "Nếu dây nicrom có điện trở lớn hơn dây constantan thì đồ thị của dây nicrom sẽ có độ dốc (góc tạo bởi đồ thị và trục hoành U) nhỏ hơn đồ thị của dây constantan.", a: true }, 
+            { l: "d)", t: "Khi thay đổi điện trở của dây dẫn thì cường độ dòng điện chạy qua đoạn mạch không thay đổi nếu U được giữ nguyên.", a: false } 
+        ], e: "Ý a đúng vì cường độ dòng điện tỉ lệ thuận với hiệu điện thế. Ý b sai vì định luật Ohm phát biểu I tỉ lệ thuận với U. Ý c đúng vì hệ số góc đồ thị là 1/R. Ý d sai vì nếu U giữ nguyên, thay đổi R thì I chắc chắn thay đổi." },
+        { ctx: "Hai đoạn dây đồng chất, dây 1 có chiều dài $l_1$, tiết diện $S_1$ và điện trở $R_1$; dây 2 có chiều dài $l_2 = 2 l_1$, tiết diện $S_2 = \\frac{S_1}{2}$ và điện trở $R_2$.", sts: [ 
+            { l: "a)", t: "Công thức tính điện trở của các đoạn dây dẫn là $R = \\rho\\frac{l}{S}$.", a: true }, 
+            { l: "b)", t: "Hai đoạn dây này có cùng giá trị điện trở suất $\\rho$ do chúng đồng chất.", a: true }, 
+            { l: "c)", t: "Điện trở của đoạn dây 2 nhỏ hơn đoạn dây 1.", a: false }, 
+            { l: "d)", t: "Tính toán theo công thức, ta có $R_2 = 4 R_1$.", a: true } 
+        ], e: "Ý c sai vì $R_2 = 4 R_1$ nên điện trở dây 2 lớn hơn dây 1. Ý d đúng vì $R_2 = \\rho\\frac{2l_1}{S_1 / 2} = 4 \\rho\\frac{l_1}{S_1} = 4 R_1$." },
+        { ctx: "Mắc nối tiếp một điện trở $R_1 = 15 \\Omega$ và một biến trở R vào nguồn điện không đổi có U = 9 V.", sts: [ 
+            { l: "a)", t: "Điện trở của đoạn mạch có tác dụng hỗ trợ sự di chuyển có hướng của các hạt tải điện.", a: false }, 
+            { l: "b)", t: "Nếu điều chỉnh biến trở R tăng lên thì cường độ dòng điện trong mạch sẽ tăng theo.", a: false }, 
+            { l: "c)", t: "Khi biến trở R được điều chỉnh về giá trị $R = 30 \\Omega$, điện trở tương đương của toàn mạch là $45 \\Omega$.", a: true }, 
+            { l: "d)", t: "Khi $R = 30 \\Omega$, cường độ dòng điện chạy qua điện trở $R_1$ là 0,2 A.", a: true } 
+        ], e: "Ý a sai vì điện trở cản trở dòng điện. Ý b sai vì điện trở tăng làm dòng điện giảm. Ý c đúng vì mạch nối tiếp $R_{tđ} = 15 + 30 = 45 \\Omega$. Ý d đúng vì $I = \\frac{9}{45} = 0,2$ A." },
+        { ctx: "Cho ba điện trở giống nhau $R_1 = R_2 = R_3 = 30 \\Omega$. Đem mắc chúng thành một đoạn mạch song song gồm cả 3 điện trở rồi nối vào nguồn U = 10 V.", sts: [ 
+            { l: "a)", t: "Công thức tính điện trở tương đương của đoạn mạch này là $\\frac{1}{R_{tđ}} = \\frac{1}{R_1} + \\frac{1}{R_2} + \\frac{1}{R_3}$.", a: true }, 
+            { l: "b)", t: "Điện trở tương đương của đoạn mạch bằng $10 \\Omega$.", a: true }, 
+            { l: "c)", t: "Nếu tháo bớt điện trở $R_3$ ra khỏi mạch, điện trở tương đương của mạch sẽ giảm xuống.", a: false }, 
+            { l: "d)", t: "Cường độ dòng điện chạy qua mạch chính khi mắc cả 3 điện trở là 1,0 A.", a: true } 
+        ], e: "Ý b đúng vì $1/R_{tđ} = 3/30 = 1/10$. Ý c sai vì tháo bớt nhánh song song làm $R_{tđ}$ tăng lên 15 $\\Omega$. Ý d đúng vì $I = \\frac{10}{10} = 1,0$ A." },
+        { ctx: "Trong thí nghiệm xây dựng định luật Ohm, học sinh dùng một điện trở $R_x$ chưa biết giá trị. Khi đặt $U = 4,5$ V thì ampe kế chỉ $I = 0,15$ A.", sts: [ 
+            { l: "a)", t: "Học sinh kết luận được rằng điện trở $R_x$ có giá trị bằng $30 \\Omega$.", a: true }, 
+            { l: "b)", t: "Nếu học sinh dùng pin mới làm hiệu điện thế tăng lên 9,0 V thì điện trở $R_x$ sẽ tăng lên thành $60 \\Omega$.", a: false }, 
+            { l: "c)", t: "Mối liên hệ giữa cường độ dòng điện và hiệu điện thế trong thí nghiệm này được biểu diễn bằng một đường thẳng.", a: true }, 
+            { l: "d)", t: "Để cường độ dòng điện giảm đi một phần ba (chỉ còn 0,05 A), học sinh cần giảm hiệu điện thế xuống còn 1,5 V.", a: true } 
+        ], e: "Ý a đúng: $R_x = 4,5 / 0,15 = 30 \\Omega$. Ý b sai vì điện trở không phụ thuộc vào U. Ý d đúng vì I giảm 3 lần thì U cũng phải giảm 3 lần." },
+        { ctx: "Một dây dẫn bằng nhôm hình trụ tròn, dài 50 m, có điện trở suất $\\rho = 2,8 \\times 10^{-8} \\Omega m$ và bán kính tiết diện r = 1 mm.", sts: [ 
+            { l: "a)", t: "Trong công thức $R = \\rho\\frac{l}{S}$, đại lượng $\\rho$ phụ thuộc vào bản chất vật liệu làm dây.", a: true }, 
+            { l: "b)", t: "Tiết diện S của dây nhôm này được tính bằng công thức $S = \\pi r^2$ và có giá trị là $3,14 m^2$.", a: false }, 
+            { l: "c)", t: "Điện trở của dây nhôm này xấp xỉ bằng $0,45 \\Omega$.", a: true }, 
+            { l: "d)", t: "Nếu chập đôi dây nhôm này lại (gập làm 2) để sử dụng thì điện trở của sợi dây mới sẽ tăng lên gấp đôi.", a: false } 
+        ], e: "Ý b sai: $S = 3,14 \\times (10^{-3})^2 = 3,14 \\times 10^{-6} m^2$. Ý d sai: Chập đôi dây thì chiều dài giảm 2 lần, tiết diện tăng 2 lần, điện trở giảm đi 4 lần." },
+        { ctx: "Trong một giờ thực hành, giáo viên yêu cầu học sinh mắc một bóng đèn (ghi 6V - 0,5A) vào nguồn điện 9V. Để đèn sáng bình thường và không bị cháy, học sinh phải mắc thêm một điện trở $R_x$ nối tiếp với bóng đèn.", sts: [ 
+            { l: "a)", t: "Mắc thêm $R_x$ nối tiếp nhằm mục đích tạo thêm sự cản trở dòng điện, làm giảm điện áp đặt lên bóng đèn.", a: true }, 
+            { l: "b)", t: "Điện trở của bóng đèn khi sáng bình thường là $12 \\Omega$.", a: true }, 
+            { l: "c)", t: "Hiệu điện thế cần thiết phải phân tán qua điện trở $R_x$ là 3 V.", a: true }, 
+            { l: "d)", t: "Giá trị điện trở $R_x$ mà học sinh cần sử dụng là $18 \\Omega$.", a: false } 
+        ], e: "Ý b đúng: $R_đ = 6/0,5 = 12 \\Omega$. Ý c đúng: $U_x = 9 - 6 = 3$ V. Ý d sai: Dòng điện định mức 0,5 A nên $R_x = 3/0,5 = 6 \\Omega$." },
+        { ctx: "Cho một đoạn mạch gồm $R_1$ mắc nối tiếp với một cụm gồm ($R_2$ song song $R_3$). Biết $R_1 = 4 \\Omega, R_2 = 10 \\Omega, R_3 = 15 \\Omega$. Đặt vào hai đầu đoạn mạch hiệu điện thế U = 20 V.", sts: [ 
+            { l: "a)", t: "Điện trở tương đương của cụm ($R_2$ song song $R_3$) được tính bằng biểu thức $\\frac{R_2.R_3}{R_2+R_3}$.", a: true }, 
+            { l: "b)", t: "Điện trở tương đương của toàn mạch là $10 \\Omega$.", a: true }, 
+            { l: "c)", t: "Cường độ dòng điện chạy qua điện trở $R_1$ nhỏ hơn cường độ dòng điện chạy qua cụm ($R_2 // R_3$).", a: false }, 
+            { l: "d)", t: "Hiệu điện thế giữa hai đầu điện trở $R_2$ bằng 12 V.", a: true } 
+        ], e: "Ý b đúng: $R_{23} = 6 \\Omega$, $R_{tđ} = 4 + 6 = 10 \\Omega$. Ý c sai vì mắc nối tiếp nên dòng qua $R_1$ BẰNG dòng qua cụm. Ý d đúng: $I = 20/10 = 2 A$, $U_2 = U_{23} = 2 \\times 6 = 12$ V." }
     ],
     short: [
-        { q: "Mắc một bóng đèn có điện trở $12\\Omega$ vào hiệu điện thế $6V$. Tính cường độ dòng điện (đơn vị Ampe) chạy qua đèn?", a: "0,5", e: "Công thức: $I = U/R = 6/12 = 0,5$ A." },
-        { q: "Đặt hiệu điện thế $12V$ vào hai đầu một dây dẫn thì dòng điện qua nó là $0,2A$. Điện trở của dây dẫn này là bao nhiêu Ohm?", a: "60", e: "Công thức: $R = U/I = 12/0,2 = 60 \\Omega$." },
-        { q: "Một dây dẫn dài $20m$ có điện trở $4\\Omega$. Nếu cắt dây dẫn đó thành các đoạn ngắn dài $5m$ thì mỗi đoạn có điện trở là bao nhiêu Ohm?", a: "1", e: "Vì điện trở tỉ lệ thuận with chiều dài. Chiều dài giảm 4 lần thì điện trở giảm 4 lần ($4/4 = 1$)." },
-        { q: "Điện trở của một dây dẫn là $10\\Omega$. Khi hiệu điện thế giữa hai đầu dây là $5V$, nếu tăng hiệu điện thế lên thành $15V$ thì cường độ dòng điện mới là bao nhiêu Ampe?", a: "1,5", e: "Cường độ ban đầu $I_1 = 5/10 = 0,5A$. U tăng 3 lần thì I tăng 3 lần ($0,5 \\cdot 3 = 1,5$)." }
+        { q: "Một sợi dây tóc bóng đèn làm bằng vonfram ở nhiệt độ phòng có chiều dài l = 0,2 m, tiết diện tròn với diện tích $S = 1,0 \\times 10^{-8} m^2$. Điện trở suất của vonfram ở nhiệt độ này là $\\rho = 5,5 \\times 10^{-8} \\Omega m$. Tính điện trở của dây tóc bóng đèn (đơn vị: ohm). (Viết kết quả là một số thập phân, ví dụ 1,2)", a: "1,1", e: "Áp dụng công thức tính điện trở: $R = \\rho\\frac{l}{S} = 5,5 \\times 10^{-8} \\times \\frac{0,2}{1,0 \\times 10^{-8}} = 1,1 \\Omega$." },
+        { q: "Một bếp điện khi hoạt động bình thường có điện trở $R = 80 \\Omega$ và cường độ dòng điện chạy qua bếp là 2,5 A. Tính hiệu điện thế đặt vào hai đầu bếp điện (đơn vị: V).", a: "200", e: "Áp dụng công thức định luật Ohm: $U = I \\times R = 2,5 \\times 80 = 200$ V." },
+        { q: "Cho hai điện trở $R_1 = 15 \\Omega$ và $R_2 = 25 \\Omega$ được mắc nối tiếp với nhau vào mạng điện có hiệu điện thế U = 12 V. Tính hiệu điện thế giữa hai đầu điện trở $R_2$ (đơn vị: V). (Làm tròn đến 1 chữ số thập phân, ví dụ 7,5)", a: "7,5", e: "$R_{tđ} = 15 + 25 = 40 \\Omega$. $I = \\frac{12}{40} = 0,3$ A. Hiệu điện thế: $U_2 = 0,3 \\times 25 = 7,5$ V." },
+        { q: "Ba điện trở $R_1 = 10 \\Omega, R_2 = 20 \\Omega, R_3 = 20 \\Omega$ được mắc song song với nhau. Tính điện trở tương đương của toàn bộ đoạn mạch này (đơn vị: ohm).", a: "5", e: "$\\frac{1}{R_{tđ}} = \\frac{1}{10} + \\frac{1}{20} + \\frac{1}{20} = \\frac{4}{20} = \\frac{1}{5} \\rightarrow R_{tđ} = 5 \\Omega$." },
+        { q: "Một đoạn dây dẫn bằng đồng có tiết diện đều, điện trở là $12 \\Omega$. Nếu người ta dùng máy kéo giãn sợi dây này sao cho chiều dài của nó tăng gấp đôi (biết thể tích và vật liệu làm dây không đổi), điện trở của sợi dây sau khi kéo giãn là bao nhiêu ohm?", a: "48", e: "Thể tích không đổi, l tăng gấp đôi thì S giảm đi một nửa. Điện trở tỉ lệ với l và tỉ lệ nghịch với S nên R tăng 4 lần. $R_{mới} = 4 \\times 12 = 48 \\Omega$." },
+        { q: "Một dây dẫn nikêlin có chiều dài 20 m, tiết diện tròn. Người ta đo được điện trở của đoạn dây này là $8,0 \\Omega$. Biết điện trở suất của nikêlin là $0,4 \\times 10^{-6} \\Omega m$. Tính tiết diện S của dây dẫn này theo đơn vị $10^{-6} m^2$ ($mm^2$).", a: "1,0", e: "$S = \\rho\\frac{l}{R} = 0,4 \\times 10^{-6} \\times \\frac{20}{8,0} = 1,0 \\times 10^{-6} m^2$. Giá trị nhập là 1,0." },
+        { q: "Một cuộn dây dẫn bằng nhôm có khối lượng m = 0,54 kg, tiết diện đều $S = 0,1 mm^2$ ($0,1 \\times 10^{-6} m^2$). Cho biết điện trở suất của nhôm là $2,8 \\times 10^{-8} \\Omega m$ và khối lượng riêng của nhôm là $2700 kg/m^3$. Tính điện trở của toàn bộ cuộn dây này (đơn vị: ohm).", a: "560", e: "$V = \\frac{m}{D} = 2 \\times 10^{-4} m^3$. $l = \\frac{V}{S} = 2000$ m. $R = \\rho\\frac{l}{S} = 2,8 \\times 10^{-8} \\times \\frac{2000}{0,1 \\times 10^{-6}} = 560 \\Omega$." },
+        { q: "Đặt một hiệu điện thế U = 12 V vào hai đầu một đoạn dây dẫn thì cường độ dòng điện chạy qua nó là 0,4 A. Để cường độ dòng điện chạy qua dây dẫn này đạt mức 0,6 A, ta phải tăng hiệu điện thế thêm một lượng bằng bao nhiêu volt (V)?", a: "6", e: "$R = \\frac{12}{0,4} = 30 \\Omega$. Để $I = 0,6 A$ thì $U = 0,6 \\times 30 = 18$ V. Lượng tăng thêm là $18 - 12 = 6$ V." }
     ]
 };
 
@@ -570,13 +622,13 @@ const initGame = (m) => {
 
     mode = m;
     isQuizRunning = true; 
-    canCheckCheat = false; // Luôn tắt kiểm tra gian lận khi mới bắt đầu cấu hình
+    canCheckCheat = false; 
     isProcessingCheat = false;
 
     currentExam = [
-        ...shuffle([...QUESTION_BANK.mcq]).slice(0, 12).map((q, i) => ({...q, id: `p1_${i}`, type: 'mcq', section: 'Phần I. Trắc nghiệm khách quan dạng đa lựa chọn (12 câu)', displayNum: i+1})),
-        ...shuffle([...QUESTION_BANK.tf]).slice(0, 4).map((q, i) => ({...q, id: `p2_${i}`, type: 'tf', section: 'Phần II. Trắc nghiệm khách quan dạng Đúng/Sai (4 câu)', displayNum: i+1})),
-        ...shuffle([...QUESTION_BANK.short]).slice(0, 4).map((q, i) => ({...q, id: `p3_${i}`, type: 'short', section: 'Phần III. Trắc nghiệm khách quan dạng trả lời ngắn (4 câu)', displayNum: i+1}))
+        ...shuffle([...QUESTION_BANK.mcq]).slice(0, 12).map((q, i) => ({...q, id: `p1_${i}`, type: 'mcq', section: 'Phần I. Đa lựa chọn (12 câu)', displayNum: i+1})),
+        ...shuffle([...QUESTION_BANK.tf]).slice(0, 4).map((q, i) => ({...q, id: `p2_${i}`, type: 'tf', section: 'Phần II. Đúng/Sai (4 câu)', displayNum: i+1})),
+        ...shuffle([...QUESTION_BANK.short]).slice(0, 4).map((q, i) => ({...q, id: `p3_${i}`, type: 'short', section: 'Phần III. Trả lời ngắn (4 câu)', displayNum: i+1}))
     ];
     userAnswers = {}; currentIdx = 0; 
     timeLeft = (mode === 'test') ? testTimeLimit : practiceTimeLimit;
@@ -587,10 +639,8 @@ const initGame = (m) => {
     document.getElementById('wish-cheat-info').style.display = (mode === 'test') ? 'block' : 'none';
     startFire();
 
-    // SỬA LỖI: Kích hoạt chế độ chống gian lận ngay sau khi yêu cầu Toàn màn hình
     if(mode === 'test') {
         document.documentElement.requestFullscreen().then(() => {
-            // Khi đã vào toàn màn hình thành công, kích hoạt giám sát ngay
             canCheckCheat = true;
         }).catch(e => {
             alert("Lỗi: Bạn cần đồng ý Toàn màn hình để thực hiện bài thi này.");
@@ -600,7 +650,7 @@ const initGame = (m) => {
 
     // Sau khi màn hình CỐ LÊN kết thúc (5 giây)
     wishTimeoutId = setTimeout(() => {
-        if(!isQuizRunning) return; // Nếu đã bị ngắt do gian lận trong lúc overlay
+        if(!isQuizRunning) return; 
         document.getElementById('wish-overlay').style.display = 'none';
         cancelAnimationFrame(fireRequest);
         
@@ -610,7 +660,6 @@ const initGame = (m) => {
         renderQuestion(); 
         startTimer();
 
-        // Với chế độ luyện tập, bật canCheckCheat sau overlay
         if(mode === 'practice') canCheckCheat = true;
     }, 5000);
 };
@@ -647,7 +696,7 @@ function renderQuestion() {
                     <input type="text" class="char-slot" maxlength="1" value="${currentVal[2] !== ' ' ? currentVal[2] : ''}" data-idx="2">
                     <input type="text" class="char-slot" maxlength="1" value="${currentVal[3] !== ' ' ? currentVal[3] : ''}" data-idx="3">
                  </div>
-                 <p style="color:var(--danger); font-size:0.75rem; font-weight:bold; text-align:center;">Lưu ý: Nhập mỗi ký tự vào một ô (kể cả dấu ",")</p>`;
+                 <p style="color:var(--danger); font-size:0.75rem; font-weight:bold; text-align:center;">Lưu ý: Nhập mỗi ký tự vào một ô</p>`;
     }
     container.innerHTML = html + `</div>`;
     
@@ -681,7 +730,6 @@ function renderQuestion() {
 async function calculateResult() {
     if(!isQuizRunning && !isProcessingCheat) return;
     
-    // Ngắt mọi tiến trình đang chờ
     if(wishTimeoutId) clearTimeout(wishTimeoutId);
     isQuizRunning = false; 
     canCheckCheat = false; 
@@ -701,7 +749,6 @@ async function calculateResult() {
     });
     const fs = parseFloat(Math.min(7, score).toFixed(1));
     
-    // Ẩn lớp phủ nếu đang ở overlay
     document.getElementById('wish-overlay').style.display = 'none';
     cancelAnimationFrame(fireRequest);
 
@@ -774,7 +821,35 @@ async function renderAdmin() {
     } catch(e) { listBody.innerHTML = "<tr><td colspan='10'>Lỗi kết nối Firebase.</td></tr>"; }
 }
 
-async function deleteEntry(id) { if(confirm("Xóa kết quả này?")) { await deleteDoc(doc(db, 'artifacts', appId_fixed, 'public', 'data', collectionName, id)); renderAdmin(); } }
+let currentDeleteId = null;
+function deleteEntry(id) { 
+    currentDeleteId = id; 
+    document.getElementById('delete-pw').value = ''; 
+    document.getElementById('delete-auth-modal').style.display = 'flex'; 
+}
+
+document.getElementById('btn-delete-cancel').onclick = () => { 
+    document.getElementById('delete-auth-modal').style.display = 'none'; 
+    currentDeleteId = null; 
+};
+
+document.getElementById('btn-delete-confirm').onclick = async () => { 
+    const pw = document.getElementById('delete-pw').value;
+    if (pw === "XOA123") { // <-- THẦY CÓ THỂ THAY ĐỔI MẬT KHẨU XOÁ TẠI ĐÂY
+        document.getElementById('delete-auth-modal').style.display = 'none'; 
+        if(currentDeleteId) {
+            await deleteDoc(doc(db, 'artifacts', appId_fixed, 'public', 'data', collectionName, currentDeleteId)); 
+            renderAdmin(); 
+            currentDeleteId = null;
+        }
+    } else {
+        const alertBox = document.getElementById('custom-alert');
+        const oldText = alertBox.innerHTML;
+        alertBox.innerHTML = "⚠️ SAI MẬT KHẨU XOÁ!";
+        alertBox.style.display = 'block';
+        setTimeout(() => { alertBox.style.display = 'none'; alertBox.innerHTML = oldText; }, 3000);
+    }
+};
 
 document.getElementById('btn-save-config').onclick = async () => {
     const pTime = parseInt(document.getElementById('cfg-time-practice').value);
@@ -869,14 +944,14 @@ document.getElementById('btn-export-excel').onclick = () => {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Báo cáo học tập");
-    XLSX.writeFile(wb, `KetQua_Vly9_${new Date().getTime()}.xlsx`);
+    XLSX.writeFile(wb, `KetQua_Vly9_ThauKinh_${new Date().getTime()}.xlsx`);
 };
 
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startTimer() { clearInterval(timerInt); timerInt = setInterval(() => { timeLeft--; const m = Math.floor(timeLeft/60), s = timeLeft%60, el = document.getElementById('timer'); if(el) el.innerText = `${m}:${s.toString().padStart(2,'0')}`; if(timeLeft <= 0) calculateResult(); }, 1000); }
 
-// --- CHỐNG GIAN LẬN: SỬA LỖI XUNG ĐỘT MÀN HÌNH CHỜ ---
+// --- CHỐNG GIAN LẬN ---
 const triggerCheat = () => { 
     if (canCheckCheat && isQuizRunning && mode === 'test' && !isProcessingCheat) { 
         isProcessingCheat = true;
@@ -886,23 +961,19 @@ const triggerCheat = () => {
     } 
 };
 
-// Theo dõi sự thay đổi toàn màn hình: ngắt ngay nếu thoát
 document.addEventListener('fullscreenchange', () => { 
     if (canCheckCheat && isQuizRunning && mode === 'test' && !document.fullscreenElement) {
         triggerCheat(); 
     }
 });
 
-// Theo dõi tab ẩn: ngắt ngay
 document.addEventListener('visibilitychange', () => { 
     if(canCheckCheat && isQuizRunning && mode === 'test' && document.visibilityState === 'hidden') {
         triggerCheat(); 
     }
 });
 
-// Theo dõi mất tiêu điểm cửa sổ: ngắt ngay
 window.addEventListener('blur', () => {
-    // Độ trễ ngắn để tránh xung đột hệ thống khi overlay chuyển động
     setTimeout(() => {
         if (canCheckCheat && isQuizRunning && mode === 'test' && !document.hasFocus()) {
             triggerCheat();
@@ -923,4 +994,4 @@ document.getElementById('user_class').oninput = (e) => localStorage.setItem('vly
 </script>
 </body>
 </html>
-<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT -->
+<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT - CẬP NHẬT CHUYÊN ĐỀ THẤU KÍNH & FIREBASE MỚI -->
