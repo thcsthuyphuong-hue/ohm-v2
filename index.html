@@ -1,10 +1,10 @@
-<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT - CẬP NHẬT CHUYÊN ĐỀ THẤU KÍNH & FIREBASE MỚI -->
+<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT - FULL 100% -->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vật lý 9 - Bài 8: Điện trở - Định luật Ohm</title>
+    <title>Vật lý 9 - Điện trở & Định luật Ohm</title>
     <!-- Hỗ trợ công thức Toán/Lý -->
     <script>
         window.MathJax = {
@@ -252,7 +252,7 @@
 
 <div class="container">
     <header id="main-header">
-        <div style="font-weight: 900; letter-spacing: 1px; color: #facc15;">HUE SMART TEST 7991 ONLINE</div>
+        <div style="font-weight: 900; letter-spacing: 1px; color: #facc15;">HUE SMART TEST 7991</div>
         <div class="timer" id="timer">--:--</div>
     </header>
 
@@ -383,6 +383,7 @@
     </footer>
 </div>
 
+<!-- Modal Đăng nhập Admin -->
 <div id="admin-auth-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20000; display:none; justify-content:center; align-items:center;">
     <div class="card" style="width:100%; max-width:400px; text-align:center;">
         <h2 style="color: var(--primary)">Xác minh Quản trị</h2>
@@ -394,14 +395,15 @@
     </div>
 </div>
 
+<!-- Modal Xác nhận Hành động (Xoá/Lưu cấu hình) -->
 <div id="delete-auth-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:20001; display:none; justify-content:center; align-items:center;">
     <div class="card" style="width:100%; max-width:400px; text-align:center; border: 4px solid var(--danger);">
-        <h2 style="color: var(--danger)">Xác nhận Xoá</h2>
-        <p style="margin-bottom: 15px; color: #475569;">Hành động này không thể hoàn tác. Vui lòng nhập mật khẩu để xoá:</p>
-        <input type="password" id="delete-pw" placeholder="Mật khẩu xoá..." style="margin-bottom:20px; outline:none; border:2px solid var(--danger);">
+        <h2 id="auth-action-title" style="color: var(--danger)">Xác nhận Hành động</h2>
+        <p style="margin-bottom: 15px; color: #475569;">Vui lòng nhập mật khẩu cấp cao để tiếp tục:</p>
+        <input type="password" id="delete-pw" placeholder="Mật khẩu..." style="margin-bottom:20px; outline:none; border:2px solid var(--danger);">
         <div style="display:flex; gap:10px;">
             <button class="btn btn-gray" style="flex:1" id="btn-delete-cancel">HỦY</button>
-            <button class="btn btn-fire" style="flex:1; background: var(--danger);" id="btn-delete-confirm">XOÁ NGAY</button>
+            <button class="btn btn-fire" style="flex:1; background: var(--danger);" id="btn-delete-confirm">XÁC NHẬN</button>
         </div>
     </div>
 </div>
@@ -412,13 +414,13 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyD9lyDnPqYCSHx2WKUPbPBgVrQT-IzloQU",
-    authDomain: "test-fef79.firebaseapp.com",
-    projectId: "test-fef79",
-    storageBucket: "test-fef79.firebasestorage.app",
-    messagingSenderId: "238727028560",
-    appId: "1:238727028560:web:44a464e1fec691ff099655",
-    measurementId: "G-ZCR523T664"
+    apiKey: "AIzaSyDg4Q6rsrvPhY31oCpL4DAAjTKlgjJN1c0",
+    authDomain: "khtn9-5c1f4.firebaseapp.com",
+    projectId: "khtn9-5c1f4",
+    storageBucket: "khtn9-5c1f4.firebasestorage.app",
+    messagingSenderId: "498407772914",
+    appId: "1:498407772914:web:8ec0ed711675a96a42366b",
+    measurementId: "G-GPZSP2DR92"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -438,7 +440,7 @@ let testTimeLimit = 2700;
 // CỜ CHỐNG GIAN LẬN
 let canCheckCheat = false; 
 let isProcessingCheat = false;
-let wishTimeoutId = null; 
+let wishTimeoutId = null;
 
 document.addEventListener('copy', (e) => { e.preventDefault(); return false; });
 document.addEventListener('keydown', (e) => {
@@ -453,6 +455,7 @@ onAuthStateChanged(auth, async user => {
     if(user) loadTimeConfig();
 });
 
+// NGÂN HÀNG 40 CÂU HỎI BÀI 11: ĐIỆN TRỞ & ĐỊNH LUẬT OHM
 const QUESTION_BANK = {
     mcq: [
         { q: "Công thức tính điện trở của một đoạn dây dẫn hình trụ đồng chất có chiều dài l, tiết diện S và điện trở suất $\\rho$ là", a: "$R = \\rho\\frac{l}{S}$", o: ["$R = \\rho\\frac{S}{l}$", "$R = \\rho\\frac{l}{S}$", "$R = \\frac{l}{\\rho S}$", "$R = \\frac{S}{\\rho l}$"], e: "Phương án B đúng vì điện trở của dây dẫn tỉ lệ thuận với chiều dài l, tỉ lệ nghịch với tiết diện S và phụ thuộc vào vật liệu làm dây dẫn." },
@@ -622,19 +625,18 @@ const initGame = (m) => {
 
     mode = m;
     isQuizRunning = true; 
-    canCheckCheat = false; 
+    canCheckCheat = false; // Luôn tắt kiểm tra gian lận khi mới bắt đầu cấu hình
     isProcessingCheat = false;
 
     currentExam = [
-        ...shuffle([...QUESTION_BANK.mcq]).slice(0, 12).map((q, i) => ({...q, id: `p1_${i}`, type: 'mcq', section: 'Phần I. Trắc nghiệm khách quan dạng đa lựa chọn (12 câu)', displayNum: i+1})),
+        ...shuffle([...QUESTION_BANK.mcq]).slice(0, 12).map((q, i) => ({...q, id: `p1_${i}`, type: 'mcq', section: 'Phần I. Trắc nghiệm khách quan dạng Đa lựa chọn (12 câu)', displayNum: i+1})),
         ...shuffle([...QUESTION_BANK.tf]).slice(0, 4).map((q, i) => ({...q, id: `p2_${i}`, type: 'tf', section: 'Phần II. Trắc nghiệm khách quan dạng Đúng/Sai (4 câu)', displayNum: i+1})),
-        ...shuffle([...QUESTION_BANK.short]).slice(0, 4).map((q, i) => ({...q, id: `p3_${i}`, type: 'short', section: 'Phần III. Trắc nghiệm khách quan dạng trả lời ngắn (4 câu)', displayNum: i+1}))
+        ...shuffle([...QUESTION_BANK.short]).slice(0, 4).map((q, i) => ({...q, id: `p3_${i}`, type: 'short', section: 'Phần III. Trắc nghiệm khách quan dạng Trả lời ngắn (4 câu)', displayNum: i+1}))
     ];
     userAnswers = {}; currentIdx = 0; 
     timeLeft = (mode === 'test') ? testTimeLimit : practiceTimeLimit;
     quizStartTime = Date.now();
     
-    // Hiển thị lớp phủ thông điệp
     document.getElementById('wish-overlay').style.display = 'flex';
     document.getElementById('wish-cheat-info').style.display = (mode === 'test') ? 'block' : 'none';
     startFire();
@@ -648,13 +650,11 @@ const initGame = (m) => {
         });
     }
 
-    // Sau khi màn hình CỐ LÊN kết thúc (5 giây)
     wishTimeoutId = setTimeout(() => {
         if(!isQuizRunning) return; 
         document.getElementById('wish-overlay').style.display = 'none';
         cancelAnimationFrame(fireRequest);
         
-        // Hiển thị giao diện bài làm
         document.getElementById('main-header').style.display = 'flex';
         showScreen('screen-quiz'); 
         renderQuestion(); 
@@ -696,7 +696,7 @@ function renderQuestion() {
                     <input type="text" class="char-slot" maxlength="1" value="${currentVal[2] !== ' ' ? currentVal[2] : ''}" data-idx="2">
                     <input type="text" class="char-slot" maxlength="1" value="${currentVal[3] !== ' ' ? currentVal[3] : ''}" data-idx="3">
                  </div>
-                 <p style="color:var(--danger); font-size:0.75rem; font-weight:bold; text-align:center;">Lưu ý: Nhập từ trái sang phải(Nếu có ít hơn 4 ký tự ký tự thì các ô sau để trống</p>`;
+                 <p style="color:var(--danger); font-size:0.75rem; font-weight:bold; text-align:center;">Lưu ý: Nhập mỗi ký tự vào một ô (kể cả dấu ",")</p>`;
     }
     container.innerHTML = html + `</div>`;
     
@@ -821,41 +821,58 @@ async function renderAdmin() {
     } catch(e) { listBody.innerHTML = "<tr><td colspan='10'>Lỗi kết nối Firebase.</td></tr>"; }
 }
 
+let pendingAuthAction = null; 
 let currentDeleteId = null;
+
 function deleteEntry(id) { 
+    pendingAuthAction = 'delete';
     currentDeleteId = id; 
+    document.getElementById('auth-action-title').innerText = "Xác nhận Xoá";
     document.getElementById('delete-pw').value = ''; 
     document.getElementById('delete-auth-modal').style.display = 'flex'; 
 }
 
+document.getElementById('btn-save-config').onclick = () => {
+    pendingAuthAction = 'config';
+    document.getElementById('auth-action-title').innerText = "Đổi Thời gian";
+    document.getElementById('delete-pw').value = ''; 
+    document.getElementById('delete-auth-modal').style.display = 'flex'; 
+};
+
 document.getElementById('btn-delete-cancel').onclick = () => { 
     document.getElementById('delete-auth-modal').style.display = 'none'; 
     currentDeleteId = null; 
+    pendingAuthAction = null;
 };
 
 document.getElementById('btn-delete-confirm').onclick = async () => { 
     const pw = document.getElementById('delete-pw').value;
-    if (pw === "XOA123") { // <-- THẦY CÓ THỂ THAY ĐỔI MẬT KHẨU XOÁ TẠI ĐÂY
+    if (pw === "XOA123") { // <-- THẦY CÓ THỂ THAY ĐỔI MẬT KHẨU TẠI ĐÂY
         document.getElementById('delete-auth-modal').style.display = 'none'; 
-        if(currentDeleteId) {
+        
+        if (pendingAuthAction === 'delete' && currentDeleteId) {
             await deleteDoc(doc(db, 'artifacts', appId_fixed, 'public', 'data', collectionName, currentDeleteId)); 
             renderAdmin(); 
             currentDeleteId = null;
+        } else if (pendingAuthAction === 'config') {
+            const pTime = parseInt(document.getElementById('cfg-time-practice').value);
+            const tTime = parseInt(document.getElementById('cfg-time-test').value);
+            if(isNaN(pTime) || isNaN(tTime) || pTime <= 0 || tTime <= 0) { alert("Vui lòng nhập số phút hợp lệ!"); return; }
+            try { 
+                await setDoc(doc(db, 'artifacts', appId_fixed, 'public', 'data', 'config', 'timer_settings'), { practice: pTime, test: tTime, lastUpdated: new Date().toISOString() }); 
+                practiceTimeLimit = pTime * 60; 
+                testTimeLimit = tTime * 60; 
+                alert("Đã cập nhật thời gian làm bài thành công!"); 
+            } catch(e) { alert("Lỗi khi lưu cấu hình!"); }
         }
+        pendingAuthAction = null;
     } else {
         const alertBox = document.getElementById('custom-alert');
         const oldText = alertBox.innerHTML;
-        alertBox.innerHTML = "⚠️ SAI MẬT KHẨU XOÁ!";
+        alertBox.innerHTML = "⚠️ SAI MẬT KHẨU!";
         alertBox.style.display = 'block';
         setTimeout(() => { alertBox.style.display = 'none'; alertBox.innerHTML = oldText; }, 3000);
     }
-};
-
-document.getElementById('btn-save-config').onclick = async () => {
-    const pTime = parseInt(document.getElementById('cfg-time-practice').value);
-    const tTime = parseInt(document.getElementById('cfg-time-test').value);
-    if(isNaN(pTime) || isNaN(tTime) || pTime <= 0 || tTime <= 0) { alert("Vui lòng nhập số phút hợp lệ!"); return; }
-    try { await setDoc(doc(db, 'artifacts', appId_fixed, 'public', 'data', 'config', 'timer_settings'), { practice: pTime, test: tTime, lastUpdated: new Date().toISOString() }); practiceTimeLimit = pTime * 60; testTimeLimit = tTime * 60; alert("Đã cập nhật thời gian làm bài thành công!"); } catch(e) { alert("Lỗi khi lưu cấu hình!"); }
 };
 
 document.getElementById('btn-admin-open').onclick = () => document.getElementById('admin-auth-modal').style.display = 'flex';
@@ -944,7 +961,7 @@ document.getElementById('btn-export-excel').onclick = () => {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Báo cáo học tập");
-    XLSX.writeFile(wb, `KetQua_Vly9_ThauKinh_${new Date().getTime()}.xlsx`);
+    XLSX.writeFile(wb, `KetQua_Vly9_${new Date().getTime()}.xlsx`);
 };
 
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -994,4 +1011,4 @@ document.getElementById('user_class').oninput = (e) => localStorage.setItem('vly
 </script>
 </body>
 </html>
-<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT - CẬP NHẬT CHUYÊN ĐỀ THẤU KÍNH & FIREBASE MỚI -->
+<!-- MÃ NGUỒN ỔN ĐỊNH NHẤT - FULL 100% -->
